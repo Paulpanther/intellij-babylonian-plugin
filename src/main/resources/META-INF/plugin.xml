@@ -6,14 +6,19 @@
     <!-- Product and plugin compatibility requirements -->
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.java</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="org.jetbrains.plugins.template.services.MyApplicationService"/>
-        <projectService serviceImplementation="org.jetbrains.plugins.template.services.MyProjectService"/>
+        <notificationGroup id="Bp Notification Group" displayType="BALLOON" key="bp.notification.group"/>
+        <fileDocumentManagerListener id="com.paulmethfessel.bp.ChangeHandler" implementation="com.paulmethfessel.bp.ChangeHandler"/>
+        <annotator language="JAVA" id="com.paulmethfessel.bp.ProbeAnnotator" implementationClass="com.paulmethfessel.bp.ProbeAnnotator"/>
+        <dom.fileMetaData implementation="com.paulmethfessel.bp.xmlComment.ExampleDescription" id="com.paulmethfessel.bp.xmlComment.ExampleDescription" rootTagName="Example" domVersion="1" />
+        <dom.fileMetaData implementation="com.paulmethfessel.bp.xmlComment.ProbeDescription" id="com.paulmethfessel.bp.xmlComment.ProbeDescription" rootTagName="Probe" domVersion="1" />
     </extensions>
 
-    <applicationListeners>
-        <listener class="org.jetbrains.plugins.template.listeners.MyProjectManagerListener"
-                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
-    </applicationListeners>
+    <actions>
+        <action id="com.paulmethfessel.bp.actions.BpToggleAction" class="com.paulmethfessel.bp.actions.BpToggleAction"
+                text="Enable/Disable Babylonian Integration"
+                description="Starts the connection to GraalVM and requests an analysis on change"/>
+    </actions>
 </idea-plugin>
