@@ -11,9 +11,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <notificationGroup id="Bp Notification Group" displayType="BALLOON" key="bp.notification.group"/>
         <fileDocumentManagerListener id="com.paulmethfessel.bp.ChangeHandler" implementation="com.paulmethfessel.bp.ChangeHandler"/>
-        <annotator language="JAVA" id="com.paulmethfessel.bp.ProbeAnnotator" implementationClass="com.paulmethfessel.bp.ProbeAnnotator"/>
-        <dom.fileMetaData implementation="com.paulmethfessel.bp.xmlComment.ExampleDescription" id="com.paulmethfessel.bp.xmlComment.ExampleDescription" rootTagName="Example" domVersion="1" />
-        <dom.fileMetaData implementation="com.paulmethfessel.bp.xmlComment.ProbeDescription" id="com.paulmethfessel.bp.xmlComment.ProbeDescription" rootTagName="Probe" domVersion="1" />
+        <annotator language="JAVA" id="com.paulmethfessel.bp.BpAnnotator" implementationClass="com.paulmethfessel.bp.BpAnnotator"/>
+        <codeInsight.inlayProvider language="JAVA" implementationClass="com.paulmethfessel.bp.ProbeHintsProvider2"/>
     </extensions>
 
     <actions>
