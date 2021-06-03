@@ -1,10 +1,10 @@
-package com.paulmethfessel.bp.xmlComment
+package com.paulmethfessel.bp.lang.xml
 
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlTokenType
 import com.intellij.xml.util.XmlUtil
-import com.paulmethfessel.bp.BpAnnotator
-import com.paulmethfessel.bp.ProbeHintsProvider2
+import com.paulmethfessel.bp.ide.decorators.BpAnnotator
+import com.paulmethfessel.bp.ide.decorators.ProbeHintsProvider2
 
 class ProbeComment(
     root: XmlTag,

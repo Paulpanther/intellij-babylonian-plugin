@@ -44,7 +44,7 @@ intellij {
     updateSinceUntilBuild = true
 
     // Plugin Dependencies. Uses `platformPlugins` property from the gradle.properties file.
-    setPlugins("com.intellij.java")
+    setPlugins(*properties("platformPlugins").split(',').map(String::trim).filter(String::isNotEmpty).toTypedArray())
 }
 
 // Configure gradle-changelog-plugin plugin.

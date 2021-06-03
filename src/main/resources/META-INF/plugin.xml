@@ -6,17 +6,20 @@
     <!-- Product and plugin compatibility requirements -->
     <!-- https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
-    <depends>com.intellij.java</depends>
+    <depends>JavaScript</depends>
 
     <extensions defaultExtensionNs="com.intellij">
         <notificationGroup id="Bp Notification Group" displayType="BALLOON" key="bp.notification.group"/>
-        <fileDocumentManagerListener id="com.paulmethfessel.bp.ChangeHandler" implementation="com.paulmethfessel.bp.ChangeHandler"/>
-        <annotator language="JAVA" id="com.paulmethfessel.bp.BpAnnotator" implementationClass="com.paulmethfessel.bp.BpAnnotator"/>
-        <codeInsight.inlayProvider language="JAVA" implementationClass="com.paulmethfessel.bp.ProbeHintsProvider2"/>
+        <fileDocumentManagerListener id="com.paulmethfessel.bp.ide.events.ChangeHandler" implementation="com.paulmethfessel.bp.ide.events.ChangeHandler"/>
+        <annotator language="JavaScript" id="com.paulmethfessel.bp.ide.decorators.BpAnnotator" implementationClass="com.paulmethfessel.bp.ide.decorators.BpAnnotator"/>
+        <codeInsight.inlayProvider language="JavaScript" implementationClass="com.paulmethfessel.bp.ide.decorators.ProbeHintsProvider2"/>
+        <intentionAction id="blaksdnlas">
+            <className>com.paulmethfessel.bp.ide.events.BpAddExampleIntentionAction</className>
+        </intentionAction>
     </extensions>
 
     <actions>
-        <action id="com.paulmethfessel.bp.actions.BpToggleAction" class="com.paulmethfessel.bp.actions.BpToggleAction"
+        <action id="com.paulmethfessel.bp.ide.events.BpToggleAction" class="com.paulmethfessel.bp.ide.events.BpToggleAction"
                 text="Enable/Disable Babylonian Integration"
                 description="Starts the connection to GraalVM and requests an analysis on change"/>
     </actions>

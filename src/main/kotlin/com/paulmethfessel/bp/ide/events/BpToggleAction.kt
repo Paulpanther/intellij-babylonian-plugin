@@ -1,9 +1,9 @@
-package com.paulmethfessel.bp.actions
+package com.paulmethfessel.bp.ide.events
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
-import com.paulmethfessel.bp.services.LSPService
+import com.paulmethfessel.bp.ide.services.LSPService
 
 class BpToggleAction: AnAction() {
     override fun actionPerformed(e: AnActionEvent) {

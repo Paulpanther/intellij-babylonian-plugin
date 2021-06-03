@@ -2,6 +2,7 @@ package com.paulmethfessel.bp;
 
 import com.intellij.codeInsight.hints.ChangeListener;
 import com.intellij.codeInsight.hints.ImmediateConfigurable;
+import com.paulmethfessel.bp.ide.decorators.JavaPanelHelper;
 
 import javax.swing.*;
 

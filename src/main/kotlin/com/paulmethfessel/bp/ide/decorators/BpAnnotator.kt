@@ -1,4 +1,4 @@
-package com.paulmethfessel.bp
+package com.paulmethfessel.bp.ide.decorators
 
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
-import com.paulmethfessel.bp.xmlComment.*
+import com.paulmethfessel.bp.lang.xml.*
 
 class BpAnnotator: Annotator {
     private lateinit var holder: AnnotationHolder

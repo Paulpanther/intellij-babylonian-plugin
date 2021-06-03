@@ -1,12 +1,12 @@
-package com.paulmethfessel.bp.xmlComment
+package com.paulmethfessel.bp.lang.xml
 
 import com.intellij.lang.xml.XMLLanguage
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileFactory
 import com.intellij.psi.xml.XmlFile
 import com.intellij.psi.xml.XmlTag
-import com.paulmethfessel.bp.BpAnnotator
-import com.paulmethfessel.bp.ProbeHintsProvider2
+import com.paulmethfessel.bp.ide.decorators.BpAnnotator
+import com.paulmethfessel.bp.ide.decorators.ProbeHintsProvider2
 
 object CommentParser {
     fun tryParse(element: PsiElement): CommentElement? {

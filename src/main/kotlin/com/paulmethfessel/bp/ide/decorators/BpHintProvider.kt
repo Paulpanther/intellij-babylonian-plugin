@@ -1,29 +1,22 @@
 @file:Suppress("UnstableApiUsage")
 
-package com.paulmethfessel.bp
+package com.paulmethfessel.bp.ide.decorators
 
 import com.intellij.codeInsight.hints.*
-import com.intellij.codeInsight.hints.presentation.BasePresentation
-import com.intellij.codeInsight.hints.presentation.InlayPresentation
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
-import com.intellij.ide.ui.AntialiasingType
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.BlockInlayPriority
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.impl.EditorImpl
-import com.intellij.openapi.editor.markup.EffectType
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.layout.panel
-import com.intellij.ui.paint.EffectPainter
-import com.paulmethfessel.bp.xmlComment.CommentParser
-import com.paulmethfessel.bp.xmlComment.ExampleComment
-import com.paulmethfessel.bp.xmlComment.ProbeComment
-import java.awt.Color
-import java.awt.Font
-import java.awt.Graphics2D
-import java.awt.RenderingHints
+import com.paulmethfessel.bp.ProbeIConfigurable
+import com.paulmethfessel.bp.ide.services.LSPService
+import com.paulmethfessel.bp.ide.services.uri
+import com.paulmethfessel.bp.lang.xml.CommentParser
+import com.paulmethfessel.bp.lang.xml.ExampleComment
+import com.paulmethfessel.bp.lang.xml.ProbeComment
 import javax.swing.JComponent
 
 class JavaPanelHelper {
@@ -40,6 +33,7 @@ class ProbeHintsProvider2: InlayHintsProvider<NoSettings> {
 
     private lateinit var sink: InlayHintsSink
     private lateinit var factory: PresentationFactory
+    private lateinit var original: PsiElement
 
     override fun getCollectorFor(
         file: PsiFile,
@@ -47,8 +41,10 @@ class ProbeHintsProvider2: InlayHintsProvider<NoSettings> {
         settings: NoSettings,
         sink: InlayHintsSink
     ) = object: FactoryInlayHintsCollector(editor) {
+
         override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
             val hinter = this@ProbeHintsProvider2
+            hinter.original = element
             hinter.sink = sink
             hinter.factory = factory
 
@@ -71,7 +67,16 @@ class ProbeHintsProvider2: InlayHintsProvider<NoSettings> {
     }
 
     fun showHintForProbe(example: ProbeComment) {
-        val p = factory.inset(factory.text("Probe"), top = 0, left = 3)
+        val lsp = service<LSPService>()
+        val probes = lsp.lastProbes[original.containingFile.uri.toString()] ?: return
+        val probe = probes.find { it.lineIndex == original.lineNumber } ?: return
+
+        val firstExample = probe.examples.getOrNull(0) ?: return
+        val probeText = firstExample.observedValues.joinToString(", ") { it.displayString }
+
+        val p = factory.inset(factory.text(probeText), top = 0, left = 3)
         sink.addInlineElement(example.end, true, p, true)
     }
 }
+
+val PsiElement.lineNumber get() = containingFile.viewProvider.document?.getLineNumber(textOffset)
