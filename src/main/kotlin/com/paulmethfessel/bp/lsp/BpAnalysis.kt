@@ -1,19 +1,13 @@
 package com.paulmethfessel.bp.lsp
 
-import com.google.gson.Gson
 import org.eclipse.lsp4j.*
-import org.eclipse.lsp4j.jsonrpc.Launcher
-import org.eclipse.lsp4j.services.LanguageServer
-import java.io.File
 import java.net.URI
 
-object BpAnalysis {
+fun createBpAnalysisCommandParams(uri: URI, probes: List<BpRequestProbe>) =
+    ExecuteCommandParams("babylonian_analysis", listOf(uri.toString(), probes))
 
-}
-
-class BpAnalysisCommandParams(uri: URI, optionals: List<Any> = listOf())
-: ExecuteCommandParams("babylonian_analysis", listOf(uri.toString()) + optionals) {
-    constructor(uri: URI, lineIndex: Int, expression: String): this(uri, listOf(lineIndex, expression))
+class BpRequestProbe(val line: Int, val expression: String) {
+//    val json: String = Gson().toJson(this)
 }
 
 class BpResponse(val result: BpResult)

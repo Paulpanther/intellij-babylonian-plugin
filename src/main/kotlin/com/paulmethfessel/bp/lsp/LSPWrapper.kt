@@ -45,13 +45,8 @@ class LSPWrapper {
     }
 
     @Throws(InvalidResponseException::class, NotConnectedException::class)
-    fun analyze(file: File, line: Int, expression: String) =
-        analyze(file, BpAnalysisCommandParams(file.toURI(), line, expression))
-
-    @Throws(InvalidResponseException::class, NotConnectedException::class)
-    fun analyze(file: File) = analyze(file, BpAnalysisCommandParams(file.toURI()))
-
-    private fun analyze(file: File, params: BpAnalysisCommandParams): BpResult {
+    fun analyze(file: File, probes: List<BpRequestProbe>): BpResult {
+        val params = createBpAnalysisCommandParams(file.toURI(), probes)
         val launcher = launcher ?: throw NotConnectedException()
 
         val document = TextDocumentItem(file.toURI().toString(), file.extension, version++, file.contents)

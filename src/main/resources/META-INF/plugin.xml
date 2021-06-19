@@ -16,6 +16,7 @@
         <intentionAction id="blaksdnlas">
             <className>com.paulmethfessel.bp.ide.events.BpAddExampleIntentionAction</className>
         </intentionAction>
+        <documentationProvider implementation="com.paulmethfessel.bp.ide.decorators.BpDocumentationProvider"/>
     </extensions>
 
     <actions>

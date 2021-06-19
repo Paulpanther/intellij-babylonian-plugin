@@ -9,10 +9,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.paulmethfessel.bp.lsp.AlreadyConnectedException
-import com.paulmethfessel.bp.lsp.BpProbe
-import com.paulmethfessel.bp.lsp.LSPWrapper
-import com.paulmethfessel.bp.lsp.ServerConnectionFailedException
+import com.paulmethfessel.bp.lsp.*
 import java.io.File
 import java.net.URI
 
@@ -41,16 +38,16 @@ class LSPService {
     private val _lastProbes = mutableMapOf<String, List<BpProbe>>()
     val lastProbes = _lastProbes as Map<String, List<BpProbe>>
 
-    fun analyze(doc: Document) {
+    fun analyze(doc: Document, probes: List<BpRequestProbe>) {
         if (!connected) return
 
         val projects = ProjectManager.getInstance().openProjects
-        val file = projects.firstNotNullOfOrNull {
+        val file = projects.map {
             PsiDocumentManager.getInstance(it).getPsiFile(doc)
-        } ?: return
+        }.first { it != null } ?: return
 
         val currentUri = file.uri.toString()
-        val result = lsp.analyze(file.virtualFile.file)
+        val result = lsp.analyze(file.virtualFile.file, probes)
         val lspFile = result.files.find { it.uri == currentUri } ?: return
         _lastProbes[currentUri] = lspFile.probes
 
