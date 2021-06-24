@@ -9,6 +9,6 @@ import com.paulmethfessel.bp.lsp.BpRequestProbe
 class ChangeHandler: FileDocumentManagerListener {
     override fun beforeDocumentSaving(document: Document) {
         val lsp = service<LSPService>()
-        lsp.analyze(document, listOf(BpRequestProbe(8, "fibonacci(n - 1) + fibonacci(n - 2)")))
+        lsp.analyze(document)
     }
 }
