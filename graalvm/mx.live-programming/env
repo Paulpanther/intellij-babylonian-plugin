@@ -1,0 +1,3 @@
+
+DISABLE_INSTALLABLES=false
+JAVA_HOME=/home/paul/.labsjdk/labsjdk-ce-11.0.11-jvmci-20.3-b16

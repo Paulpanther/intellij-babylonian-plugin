@@ -1,0 +1,11 @@
+# npm
+node_modules
+
+# mx
+mxbuild
+out
+live-installable-java11.jar
+polyglot-live-programming-0.0.3.vsix
+
+# idea
+*.iml
