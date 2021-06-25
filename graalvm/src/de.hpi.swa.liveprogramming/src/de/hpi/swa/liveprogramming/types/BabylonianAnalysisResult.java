@@ -137,5 +137,6 @@ public final class BabylonianAnalysisResult {
         ASSERTION,
         ORPHAN,
         SELECTION,
+        RANGED_SELECTION,
     }
 }

@@ -66,6 +66,8 @@ import de.hpi.swa.liveprogramming.types.ObjectInformation;
 import com.oracle.truffle.tools.utils.json.JSONArray;
 import com.oracle.truffle.tools.utils.json.JSONObject;
 
+import static de.hpi.swa.liveprogramming.types.AbstractProbe.*;
+
 @Registration(id = BabylonianAnalysisExtension.ID, name = BabylonianAnalysisExtension.NAME, version = BabylonianAnalysisExtension.VERSION, services = LSPExtension.class)
 public class BabylonianAnalysisExtension extends TruffleInstrument implements LSPExtension {
 	protected static final String ID = "babylonian-analysis-lsp-extension";
@@ -105,47 +107,25 @@ public class BabylonianAnalysisExtension extends TruffleInstrument implements LS
 		public Object execute(LSPServerAccessor server, Env envInternal, List<Object> arguments) {
 			startMillis = System.currentTimeMillis();
 			URI targetURI = URI.create((String) arguments.get(0));
+			List<RangedSelectionProbeRequest> probes = RangedSelectionProbeRequest.fromJSON((JSONArray) arguments.get(1));
 
 			Set<URI> openFileURIs = server.getOpenFileURI2LangId().keySet();
 
 			BabylonianAnalysisResult result = new BabylonianAnalysisResult();
 
-			JSONArray probes = (JSONArray) arguments.get(1);
-
-//            if (arguments.size() == 3) {
-//                try {
-//                    int selectedLineNumber = (int) arguments.get(1) + 1;
-//                    String selectedText = ((String) arguments.get(2));
-//                    String languageId = Source.findLanguage(targetURI.toURL());
-//                    result.getOrCreateFile(targetURI, languageId).addProbe(selectedLineNumber, new SelectionProbe(null, selectedLineNumber, selectedText));
-//                } catch (ClassCastException | IOException e) {
-//                    printError(e.getMessage());
-//                }
-//            }
-
 			for (URI uri : openFileURIs) {
 				Source source = server.getSource(uri);
 				if (source != null && source.hasCharacters()) {
-					for (int i = 0; i < probes.length(); i++) {
+					BabylonianAnalysisFileResult fileResult = result.getOrCreateFile(uri, source.getLanguage());
+					addRangeSelectionProbes(fileResult, probes, source);
+					scanDocument(fileResult, source);
+                    if (source.getCharacters().toString().contains(EXAMPLE_PREFIX)) {
 						try {
-							JSONObject probe = probes.getJSONObject(i);
-							int line = probe.getInt("line");
-							String expression = probe.getString("expression");
-							String languageId = Source.findLanguage(targetURI.toURL());
-
-							result.getOrCreateFile(targetURI, languageId).addProbe(line, new SelectionProbe(null, line, expression));
+							envInternal.parse(source).call();
 						} catch (Throwable e) {
+							return BabylonianAnalysisTerminationResult.create(startMillis, e.getMessage());
 						}
-					}
-
-					scanDocument(result.getOrCreateFile(uri, source.getLanguage()), source);
-//                    if (source.getCharacters().toString().contains(EXAMPLE_PREFIX)) {
-					try {
-						envInternal.parse(source).call();
-					} catch (Throwable e) {
-						return BabylonianAnalysisTerminationResult.create(startMillis, e.getMessage());
-					}
-//                    }
+                    }
 				}
 			}
 
@@ -162,17 +142,20 @@ public class BabylonianAnalysisExtension extends TruffleInstrument implements LS
 			return BabylonianAnalysisTerminationResult.create(startMillis, result);
 		}
 
-		private String[] fromJSONList(Object obj) {
-			String arg = (String) obj;
-			return arg.substring(1, arg.length() - 1).split(",");
-		}
-
 		public int getTimeoutMillis() {
 			return 10000;
 		}
 
 		public Object onTimeout(List<Object> arguments) {
 			return BabylonianAnalysisTerminationResult.create(startMillis, "Babylonian analysis timed out.");
+		}
+
+		private static void addRangeSelectionProbes(BabylonianAnalysisFileResult fileResult, List<RangedSelectionProbeRequest> probeRequests, Source source) {
+			for (RangedSelectionProbeRequest request : probeRequests) {
+				String line = source.getCharacters(request.getLineNumber()).toString();
+				String expression = line.substring(request.getStart(), request.getEnd());
+				fileResult.addProbe(request.getLineNumber(), new RangedSelectionProbe(null, expression, request));
+			}
 		}
 
 		private static void scanDocument(BabylonianAnalysisFileResult fileResult, Source source) {

@@ -5,18 +5,18 @@
  */
 package de.hpi.swa.liveprogramming.types;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
+import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.interop.InteropLibrary;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.tools.utils.json.JSONArray;
+import com.oracle.truffle.tools.utils.json.JSONException;
 import com.oracle.truffle.tools.utils.json.JSONObject;
 
 import de.hpi.swa.liveprogramming.BabylonianAnalysisExtension.BabylonianAnalysisCommand;
@@ -53,7 +53,7 @@ public abstract class AbstractProbe {
         return lineNumber;
     }
 
-    public final JSONObject toJSON() {
+    public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("probeType", getProbeType());
         json.put("lineIndex", lineNumber - 1);
@@ -204,6 +204,91 @@ public abstract class AbstractProbe {
         @Override
         protected ProbeType getProbeType() {
             return ProbeType.SELECTION;
+        }
+    }
+
+    public static final class RangedSelectionProbeRequest {
+    	private final int lineNumber;
+        private final int start;
+        private final int end;
+
+        public static List<RangedSelectionProbeRequest> fromJSON(JSONArray json) {
+            try {
+                return IntStream.range(0, json.length())
+                        .boxed()
+                        .map(i -> RangedSelectionProbeRequest.fromJSON(json.getJSONObject(i)))
+                        .filter(Objects::nonNull)
+                        .collect(Collectors.toList());
+            } catch (JSONException e) {
+            	e.printStackTrace();
+            	return Collections.emptyList();
+            }
+        }
+
+        public static RangedSelectionProbeRequest fromJSON(JSONObject json) {
+            try {
+                return new RangedSelectionProbeRequest(
+                        json.getInt("lineNumber"),
+                        json.getInt("start"),
+                        json.getInt("end")
+                );
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        public RangedSelectionProbeRequest(int lineNumber, int start, int end) {
+            this.lineNumber = lineNumber;
+            this.start = start;
+            this.end = end;
+        }
+
+        public int getLineNumber() {
+            return lineNumber;
+        }
+
+        public int getStart() {
+            return start;
+        }
+
+        public int getEnd() {
+            return end;
+        }
+    }
+
+    public static final class RangedSelectionProbe extends AbstractProbe {
+        private final String expression;
+        private final int start;
+        private final int end;
+
+        public RangedSelectionProbe(String exampleNameOrNull, String expression, int lineNumber, int start, int end) {
+            super(exampleNameOrNull, lineNumber);
+            this.expression = expression;
+            this.start = start;
+            this.end = end;
+        }
+
+        public RangedSelectionProbe(String exampleNameOrNull, String expression, RangedSelectionProbeRequest request) {
+            this(exampleNameOrNull, expression, request.lineNumber, request.start, request.end);
+        }
+
+        @Override
+        public JSONObject toJSON() {
+            JSONObject json = super.toJSON();
+            json.put("start", start);
+            json.put("end", end);
+            return json;
+        }
+
+        @Override
+        protected ObjectInformation getObjectInformation(ExampleProbe example, SourceSection section, Object value, Function<String, Object> inlineEvaluator) {
+            return ObjectInformation.create(expression, inlineEvaluator.apply(expression));
+        }
+
+        @Override
+        protected ProbeType getProbeType() {
+            return ProbeType.RANGED_SELECTION;
         }
     }
 
