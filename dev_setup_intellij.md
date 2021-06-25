@@ -1,0 +1,11 @@
+# Setup repo for dev on intellij
+
+1. Clone the repo and follow `installing_live.md`
+2. Importing the project in Intellij will set up the plugin code (in `src/`) through Gradle
+3. Create a java module for `graalvm/`
+4. Set `graalvm/src/de.hpi.swa.liveprogramming/src` as sources root
+5. Open Project Settings, Libraries and add a new project library via maven: `org.graalvm.tools:lsp`
+6. Now the java files should not show any errors
+7. Create a new run configuration of type shell script
+   1. Set the script text to execute `/path/to/mx/mx build`
+   2. Set working directory to the `graalvm` folder in this project
