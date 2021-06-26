@@ -8,8 +8,6 @@ package de.hpi.swa.liveprogramming.types;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.interop.InteropLibrary;
@@ -119,6 +117,36 @@ public abstract class AbstractProbe {
         }
     }
 
+    public static final class ExampleActive {
+        private final int lineNumber;
+        private final boolean active;
+
+        public static ExampleActive fromJSON(JSONObject json) {
+            try {
+                return new ExampleActive(
+                        json.getInt("lineNumber"),
+                        json.getBoolean("active")
+                );
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return null;
+            }
+        }
+
+        public ExampleActive(int lineNumber, boolean active) {
+            this.lineNumber = lineNumber;
+            this.active = active;
+        }
+
+        public int getLineNumber() {
+            return lineNumber;
+        }
+
+        public boolean isActive() {
+            return active;
+        }
+    }
+
     public static final class ExampleProbe extends AbstractProbe {
         public static final String EXAMPLE_FILTER_ATTRIBUTE = ":example";
         private static final String EXAMPLE_NAME_ATTRIBUTE = ":name";
@@ -211,19 +239,6 @@ public abstract class AbstractProbe {
     	private final int lineNumber;
         private final int start;
         private final int end;
-
-        public static List<RangedSelectionProbeRequest> fromJSON(JSONArray json) {
-            try {
-                return IntStream.range(0, json.length())
-                        .boxed()
-                        .map(i -> RangedSelectionProbeRequest.fromJSON(json.getJSONObject(i)))
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toList());
-            } catch (JSONException e) {
-            	e.printStackTrace();
-            	return Collections.emptyList();
-            }
-        }
 
         public static RangedSelectionProbeRequest fromJSON(JSONObject json) {
             try {

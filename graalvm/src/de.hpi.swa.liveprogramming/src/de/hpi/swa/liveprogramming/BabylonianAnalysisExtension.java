@@ -26,6 +26,7 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import de.hpi.swa.liveprogramming.types.*;
 import org.graalvm.tools.api.lsp.LSPCommand;
 import org.graalvm.tools.api.lsp.LSPExtension;
 import org.graalvm.tools.api.lsp.LSPServerAccessor;
@@ -51,20 +52,15 @@ import com.oracle.truffle.api.nodes.LanguageInfo;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 
-import de.hpi.swa.liveprogramming.types.AbstractProbe;
 import de.hpi.swa.liveprogramming.types.AbstractProbe.AssertionProbe;
 import de.hpi.swa.liveprogramming.types.AbstractProbe.ExampleProbe;
 import de.hpi.swa.liveprogramming.types.AbstractProbe.OrphanProbe;
-import de.hpi.swa.liveprogramming.types.AbstractProbe.SelectionProbe;
 import de.hpi.swa.liveprogramming.types.AbstractProbe.StatementProbe;
 import de.hpi.swa.liveprogramming.types.AbstractProbe.StatementProbeWithExpression;
-import de.hpi.swa.liveprogramming.types.BabylonianAnalysisResult;
 import de.hpi.swa.liveprogramming.types.BabylonianAnalysisResult.BabylonianAnalysisFileResult;
 import de.hpi.swa.liveprogramming.types.BabylonianAnalysisResult.BabylonianAnalysisTerminationResult;
-import de.hpi.swa.liveprogramming.types.ObjectInformation;
 
 import com.oracle.truffle.tools.utils.json.JSONArray;
-import com.oracle.truffle.tools.utils.json.JSONObject;
 
 import static de.hpi.swa.liveprogramming.types.AbstractProbe.*;
 
@@ -107,7 +103,8 @@ public class BabylonianAnalysisExtension extends TruffleInstrument implements LS
 		public Object execute(LSPServerAccessor server, Env envInternal, List<Object> arguments) {
 			startMillis = System.currentTimeMillis();
 			URI targetURI = URI.create((String) arguments.get(0));
-			List<RangedSelectionProbeRequest> probes = RangedSelectionProbeRequest.fromJSON((JSONArray) arguments.get(1));
+			List<RangedSelectionProbeRequest> probes = JSON.map((JSONArray) arguments.get(1), RangedSelectionProbeRequest::fromJSON);
+			List<ExampleActive> exampleActives = JSON.map((JSONArray) arguments.get(2), ExampleActive::fromJSON);
 
 			Set<URI> openFileURIs = server.getOpenFileURI2LangId().keySet();
 
@@ -118,7 +115,7 @@ public class BabylonianAnalysisExtension extends TruffleInstrument implements LS
 				if (source != null && source.hasCharacters()) {
 					BabylonianAnalysisFileResult fileResult = result.getOrCreateFile(uri, source.getLanguage());
 					addRangeSelectionProbes(fileResult, probes, source);
-					scanDocument(fileResult, source);
+					scanDocument(fileResult, source, exampleActives);
                     if (source.getCharacters().toString().contains(EXAMPLE_PREFIX)) {
 						try {
 							envInternal.parse(source).call();
@@ -158,7 +155,7 @@ public class BabylonianAnalysisExtension extends TruffleInstrument implements LS
 			}
 		}
 
-		private static void scanDocument(BabylonianAnalysisFileResult fileResult, Source source) {
+		private static void scanDocument(BabylonianAnalysisFileResult fileResult, Source source, List<ExampleActive> exampleActives) {
 			for (int lineNumber = 1; lineNumber <= source.getLineCount(); lineNumber++) {
 				String line = source.getCharacters(lineNumber).toString();
 				if (line.contains(EXAMPLE_PREFIX)) {
@@ -171,7 +168,11 @@ public class BabylonianAnalysisExtension extends TruffleInstrument implements LS
 						break; // End of source reached
 					}
 					if (attributes.keySet().containsAll(functionDefinition.parameters)) {
-						fileResult.addExample(new ExampleProbe(line, lineNumber, source.getLanguage(), functionDefinition, attributes));
+						final int currentLine = lineNumber;
+						ExampleActive activeRef = exampleActives.stream().filter(i -> i.getLineNumber() == currentLine).findFirst().orElse(null);
+						if (activeRef != null && activeRef.isActive()) {
+							fileResult.addExample(new ExampleProbe(line, lineNumber, source.getLanguage(), functionDefinition, attributes));
+						}
 					}
 				} else {
 					boolean containsProbe = line.contains(PROBE_PREFIX);
