@@ -1,7 +1,5 @@
 package com.paulmethfessel.bp.ide.services
 
-import com.intellij.lang.javascript.psi.JSRecursiveWalkingElementVisitor
-import com.intellij.lang.javascript.psi.JSReferenceExpression
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
@@ -11,15 +9,23 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.paulmethfessel.bp.ide.decorators.lineNumber
+import com.paulmethfessel.bp.ide.FilePos
+import com.paulmethfessel.bp.ide.FileProbeParser
 import com.paulmethfessel.bp.lsp.*
 import java.io.File
 import java.net.URI
 
+//@State(name = "com.paulmethfessel.babylonian")
 @Service
-class LSPService {
+class LSPService/*: PersistentStateComponent<PluginState>*/ {
+
+//    private var state = PluginState()
 
     private val lsp = LSPWrapper()
+
+    val connected get() = lsp.connected
+    private val _lastProbes = mutableMapOf<String, List<BpProbe>>()
+    val lastProbes = _lastProbes as Map<String, List<BpProbe>>
 
     fun connect() {
         try {
@@ -37,11 +43,7 @@ class LSPService {
         lsp.disconnect()
     }
 
-    val connected get() = lsp.connected
-    private val _lastProbes = mutableMapOf<String, List<BpProbe>>()
-    val lastProbes = _lastProbes as Map<String, List<BpProbe>>
-
-    fun analyze(doc: Document, probe: BpRequestProbe): BpProbe? {
+    fun analyze(doc: Document, probe: FilePos): BpProbe? {
         if (!connected) return null
 
         val file = getFile(doc) ?: return null
@@ -58,12 +60,12 @@ class LSPService {
     }
 
     fun analyze(file: PsiFile) {
-        val probes = findAllProbes(file)
+        val probes = FileProbeParser.findProbes(file)
         val lspFile = analyze(file, probes) ?: return
-        _lastProbes[lspFile.uri] = offsetProbes(lspFile.probes)
+        _lastProbes[lspFile.uri] = lspFile.probes
     }
 
-    fun analyze(file: PsiFile, probes: List<BpRequestProbe>): BpFile? {
+    fun analyze(file: PsiFile, probes: List<FilePos>): BpFile? {
         if (!connected) return null
 
         val currentUri = file.uri.toString()
@@ -79,31 +81,29 @@ class LSPService {
         }.firstOrNull { it != null }
     }
 
-    private fun offsetProbes(probes: List<BpProbe>): List<BpProbe> {
-        val sortedProbes = probes.sortedBy { it.lineIndex }
-        var offset = 0
-        return sortedProbes.map {
-            if (it.probeType == "SELECTION") {
-                BpProbe(it.examples, it.probeType, it.lineIndex - offset-- + 1)
-            } else BpProbe(it.examples, it.probeType, it.lineIndex + 1)
-        }
-    }
-
-    private fun findAllProbes(file: PsiFile): List<BpRequestProbe> {
-        val probes = mutableListOf<BpRequestProbe>()
-        file.accept(object: JSRecursiveWalkingElementVisitor() {
-            override fun visitJSReferenceExpression(node: JSReferenceExpression?) {
-                val line = node?.lineNumber ?: return
-                probes += BpRequestProbe(line, node.text)
-            }
-        })
-        return probes
-    }
-
     private fun notifyError(title: String, content: String) = notify(title, content, NotificationType.ERROR)
     private fun notify(title: String, content: String, type: NotificationType = NotificationType.INFORMATION) {
         Notifications.Bus.notify(Notification("Bp Notification Group", title, content, type))
     }
+
+//    override fun getState() = state
+//
+//    override fun loadState(state: PluginState) {
+//        // TODO clear unused examples
+//        this.state = state
+//    }
+
+//    fun getOrCreateExampleState(example: PsiElement): ExampleState {
+//        val file = example.containingFile
+//        val line = example.lineNumber
+//        val uri = file.uri.toString()
+//        val existingExample = state.examples.find { it.uri == uri && it.lineNumber == line }
+//        if (existingExample != null) return existingExample
+//
+//        val newExample = ExampleState(uri, line)
+//        state.examples += newExample
+//        return newExample
+//    }
 }
 
 val VirtualFile.file get() = File(path)

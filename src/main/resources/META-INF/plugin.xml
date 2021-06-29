@@ -17,6 +17,7 @@
             <className>com.paulmethfessel.bp.ide.events.BpAddExampleIntentionAction</className>
         </intentionAction>
         <documentationProvider implementation="com.paulmethfessel.bp.ide.decorators.BpDocumentationProvider"/>
+        <codeInsight.lineMarkerProvider implementationClass="com.paulmethfessel.bp.ide.decorators.ExampleLineMarker" language="JavaScript"/>
     </extensions>
 
     <actions>

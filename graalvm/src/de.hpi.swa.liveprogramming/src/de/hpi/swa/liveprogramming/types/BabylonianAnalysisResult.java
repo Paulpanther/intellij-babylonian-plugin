@@ -54,15 +54,23 @@ public final class BabylonianAnalysisResult {
                 final URI normalizedURI = BabylonianAnalysisExtension.toSourceURI(entry.getKey());
                 builder.sourceIs(s -> s.getURI().equals(normalizedURI));
                 // All probe and assertion lines
-                builder.lineIn(toIndexRanges(entry.getValue().probes.keySet()));
+
+                Set<FilePos> positions = entry.getValue().probes.keySet();
+                // TODO maybe filters are wrong?
+                builder.lineIn(toLineRange(positions));
+                builder.columnIn(toColumnRange(positions));
                 filters[filterIndex++] = builder.build();
             }
         }
         return filters;
     }
 
-    private static IndexRange[] toIndexRanges(Set<Integer> set) {
-        return set.stream().map(i -> IndexRange.between(i, i + 1)).toArray(IndexRange[]::new);
+    private static IndexRange[] toLineRange(Set<FilePos> set) {
+        return set.stream().map(FilePos::getLineRange).toArray(IndexRange[]::new);
+    }
+
+    private static IndexRange[] toColumnRange(Set<FilePos> set) {
+        return set.stream().map(FilePos::getColumnRange).toArray(IndexRange[]::new);
     }
 
     public static final class BabylonianAnalysisTerminationResult {
@@ -87,7 +95,7 @@ public final class BabylonianAnalysisResult {
         private final URI uri;
         private final String languageId;
         private final ArrayList<ExampleProbe> examples = new ArrayList<>();
-        private final HashMap<Integer, AbstractProbe> probes = new HashMap<>();
+        private final HashMap<FilePos, AbstractProbe> probes = new HashMap<>();
 
         public BabylonianAnalysisFileResult(URI uri, String languageId) {
             this.uri = uri;
@@ -109,13 +117,13 @@ public final class BabylonianAnalysisResult {
             return json;
         }
 
-        public void addProbe(int triggerLine, AbstractProbe probe) {
-            assert !probes.containsKey(triggerLine);
-            probes.put(triggerLine, probe);
+        public void addProbe(FilePos pos, AbstractProbe probe) {
+            assert !probes.containsKey(pos);
+            probes.put(pos, probe);
         }
 
-        public AbstractProbe get(int triggerLine) {
-            return probes.get(triggerLine);
+        public AbstractProbe get(FilePos pos) {
+            return probes.get(pos);
         }
 
         public void addExample(ExampleProbe example) {
@@ -137,6 +145,5 @@ public final class BabylonianAnalysisResult {
         ASSERTION,
         ORPHAN,
         SELECTION,
-        RANGED_SELECTION,
     }
 }

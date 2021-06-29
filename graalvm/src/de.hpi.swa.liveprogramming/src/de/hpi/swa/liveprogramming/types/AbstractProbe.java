@@ -25,12 +25,12 @@ public abstract class AbstractProbe {
     private static final InteropLibrary LIB = InteropLibrary.getFactory().getUncached();
 
     private final String exampleNameOrNull;
-    private final int lineNumber;
+    private final FilePos pos;
     private final HashMap<String, ArrayList<ObjectInformation>> example2ObservedValues = new HashMap<>();
 
-    public AbstractProbe(String exampleNameOrNull, int lineNumber) {
+    public AbstractProbe(String exampleNameOrNull, FilePos pos) {
         this.exampleNameOrNull = exampleNameOrNull;
-        this.lineNumber = lineNumber;
+        this.pos = pos;
     }
 
     public final void apply(ExampleProbe example, SourceSection section, Object result, Function<String, Object> inlineEvaluator) {
@@ -47,14 +47,14 @@ public abstract class AbstractProbe {
         return exampleNameOrNull;
     }
 
-    public int getLineNumber() {
-        return lineNumber;
+    public FilePos getPos() {
+        return pos;
     }
 
     public JSONObject toJSON() {
         JSONObject json = new JSONObject();
         json.put("probeType", getProbeType());
-        json.put("lineIndex", lineNumber - 1);
+        json.put("pos", pos.toJSON());
         JSONArray examples = new JSONArray();
         for (Entry<String, ArrayList<ObjectInformation>> entry : example2ObservedValues.entrySet()) {
             JSONObject example = new JSONObject();
@@ -81,8 +81,8 @@ public abstract class AbstractProbe {
         private final String expression;
         private final boolean isExpectedValue;
 
-        public AssertionProbe(String exampleNameOrNull, int lineNumber, String expression, boolean isExpectedValue) {
-            super(exampleNameOrNull, lineNumber);
+        public AssertionProbe(String exampleNameOrNull, FilePos pos, String expression, boolean isExpectedValue) {
+            super(exampleNameOrNull, pos);
             this.expression = expression;
             this.isExpectedValue = isExpectedValue;
         }
@@ -155,8 +155,8 @@ public abstract class AbstractProbe {
         private final String[] targetArgumentExpressions;
         private final String languageId;
 
-        public ExampleProbe(String line, int lineNumber, String languageId, FunctionDefinition functionDefinition, LinkedHashMap<String, String> attributes) {
-            super(attributes.getOrDefault(EXAMPLE_NAME_ATTRIBUTE, fallbackName(line)), lineNumber);
+        public ExampleProbe(String line, FilePos pos, String languageId, FunctionDefinition functionDefinition, LinkedHashMap<String, String> attributes) {
+            super(attributes.getOrDefault(EXAMPLE_NAME_ATTRIBUTE, fallbackName(line)), pos);
             this.languageId = languageId;
             targetIdentifier = functionDefinition.getIdentifier();
             LinkedHashSet<String> parameters = functionDefinition.getParameters();
@@ -201,8 +201,8 @@ public abstract class AbstractProbe {
     }
 
     public static final class OrphanProbe extends AbstractProbe {
-        public OrphanProbe(String exampleNameOrNull, int lineNumber) {
-            super(exampleNameOrNull, lineNumber);
+        public OrphanProbe(String exampleNameOrNull, FilePos pos) {
+            super(exampleNameOrNull, pos);
         }
 
         @Override
@@ -219,8 +219,8 @@ public abstract class AbstractProbe {
     public static final class SelectionProbe extends AbstractProbe {
         private final String expression;
 
-        public SelectionProbe(String exampleNameOrNull, int lineNumber, String expression) {
-            super(exampleNameOrNull, lineNumber);
+        public SelectionProbe(String exampleNameOrNull, String expression, FilePos pos) {
+            super(exampleNameOrNull, pos);
             this.expression = expression;
         }
 
@@ -235,81 +235,9 @@ public abstract class AbstractProbe {
         }
     }
 
-    public static final class RangedSelectionProbeRequest {
-    	private final int lineNumber;
-        private final int start;
-        private final int end;
-
-        public static RangedSelectionProbeRequest fromJSON(JSONObject json) {
-            try {
-                return new RangedSelectionProbeRequest(
-                        json.getInt("lineNumber"),
-                        json.getInt("start"),
-                        json.getInt("end")
-                );
-            } catch (JSONException e) {
-                e.printStackTrace();
-                return null;
-            }
-        }
-
-        public RangedSelectionProbeRequest(int lineNumber, int start, int end) {
-            this.lineNumber = lineNumber;
-            this.start = start;
-            this.end = end;
-        }
-
-        public int getLineNumber() {
-            return lineNumber;
-        }
-
-        public int getStart() {
-            return start;
-        }
-
-        public int getEnd() {
-            return end;
-        }
-    }
-
-    public static final class RangedSelectionProbe extends AbstractProbe {
-        private final String expression;
-        private final int start;
-        private final int end;
-
-        public RangedSelectionProbe(String exampleNameOrNull, String expression, int lineNumber, int start, int end) {
-            super(exampleNameOrNull, lineNumber);
-            this.expression = expression;
-            this.start = start;
-            this.end = end;
-        }
-
-        public RangedSelectionProbe(String exampleNameOrNull, String expression, RangedSelectionProbeRequest request) {
-            this(exampleNameOrNull, expression, request.lineNumber, request.start, request.end);
-        }
-
-        @Override
-        public JSONObject toJSON() {
-            JSONObject json = super.toJSON();
-            json.put("start", start);
-            json.put("end", end);
-            return json;
-        }
-
-        @Override
-        protected ObjectInformation getObjectInformation(ExampleProbe example, SourceSection section, Object value, Function<String, Object> inlineEvaluator) {
-            return ObjectInformation.create(expression, inlineEvaluator.apply(expression));
-        }
-
-        @Override
-        protected ProbeType getProbeType() {
-            return ProbeType.RANGED_SELECTION;
-        }
-    }
-
     public static final class StatementProbe extends AbstractProbe {
-        public StatementProbe(String exampleNameOrNull, int lineNumber) {
-            super(exampleNameOrNull, lineNumber);
+        public StatementProbe(String exampleNameOrNull, FilePos pos) {
+            super(exampleNameOrNull, pos);
         }
 
         @Override
@@ -327,8 +255,8 @@ public abstract class AbstractProbe {
         public static final String PROBE_EXPRESSION_ATTRIBUTE = ":expression";
         private final String expression;
 
-        public StatementProbeWithExpression(String exampleNameOrNull, int lineNumber, String expression) {
-            super(exampleNameOrNull, lineNumber);
+        public StatementProbeWithExpression(String exampleNameOrNull, FilePos pos, String expression) {
+            super(exampleNameOrNull, pos);
             this.expression = expression;
         }
 

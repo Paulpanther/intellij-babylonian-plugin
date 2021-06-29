@@ -1,5 +1,6 @@
 package com.paulmethfessel.bp.ide.decorators
 
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
@@ -8,6 +9,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
+import com.paulmethfessel.bp.ide.FileProbeParser
 import com.paulmethfessel.bp.lang.xml.*
 
 class BpAnnotator: Annotator {
@@ -16,10 +18,17 @@ class BpAnnotator: Annotator {
     override fun annotate(element: PsiElement, holder: AnnotationHolder) {
         this.holder = holder
 
-        if (element !is PsiComment) return
-        val comment = CommentParser.tryParse(element) ?: return
+        FileProbeParser.ifCommentElement(element) { comment ->
+            comment.annotate(this)
+        }
 
-        comment.annotate(this)
+        if (FileProbeParser.isPossibleProbe(element)) {
+            annotatePossibleProbe(element)
+        }
+    }
+
+    private fun annotatePossibleProbe(element: PsiElement) {
+        annotate(element.textRange, HIGHLIGHTED_REFERENCE)
     }
 
     fun annotateExample(comment: ExampleComment) {

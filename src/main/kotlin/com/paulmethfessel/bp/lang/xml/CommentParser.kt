@@ -19,7 +19,7 @@ object CommentParser {
         val tag = file.rootTag ?: return null
 
         return when {
-            ExampleComment.isExample(tag) -> ExampleComment(tag, offset)
+            ExampleComment.isExample(tag) -> ExampleComment(element, tag, offset)
             ProbeComment.isProbe(tag) -> ProbeComment(tag, offset)
             else -> null
         }

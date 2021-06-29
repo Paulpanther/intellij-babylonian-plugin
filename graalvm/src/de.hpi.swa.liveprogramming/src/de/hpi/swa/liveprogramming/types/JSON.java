@@ -7,6 +7,7 @@ import com.oracle.truffle.tools.utils.json.JSONObject;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -22,6 +23,14 @@ public class JSON {
 		} catch (JSONException e) {
 			e.printStackTrace();
 			return Collections.emptyList();
+		}
+	}
+
+	public static <T> T orDefault(JSONObject json, String key, T def, BiFunction<JSONObject, String, T> getter) {
+		try {
+			return getter.apply(json, key);
+		} catch (JSONException e) {
+			return def;
 		}
 	}
 }

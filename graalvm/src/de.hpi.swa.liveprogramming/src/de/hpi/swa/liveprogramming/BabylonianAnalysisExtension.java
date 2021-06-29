@@ -103,7 +103,7 @@ public class BabylonianAnalysisExtension extends TruffleInstrument implements LS
 		public Object execute(LSPServerAccessor server, Env envInternal, List<Object> arguments) {
 			startMillis = System.currentTimeMillis();
 			URI targetURI = URI.create((String) arguments.get(0));
-			List<RangedSelectionProbeRequest> probes = JSON.map((JSONArray) arguments.get(1), RangedSelectionProbeRequest::fromJSON);
+			List<FilePos> probes = JSON.map((JSONArray) arguments.get(1), FilePos::fromJSON);
 			List<ExampleActive> exampleActives = JSON.map((JSONArray) arguments.get(2), ExampleActive::fromJSON);
 
 			Set<URI> openFileURIs = server.getOpenFileURI2LangId().keySet();
@@ -147,11 +147,11 @@ public class BabylonianAnalysisExtension extends TruffleInstrument implements LS
 			return BabylonianAnalysisTerminationResult.create(startMillis, "Babylonian analysis timed out.");
 		}
 
-		private static void addRangeSelectionProbes(BabylonianAnalysisFileResult fileResult, List<RangedSelectionProbeRequest> probeRequests, Source source) {
-			for (RangedSelectionProbeRequest request : probeRequests) {
-				String line = source.getCharacters(request.getLineNumber()).toString();
+		private static void addRangeSelectionProbes(BabylonianAnalysisFileResult fileResult, List<FilePos> probeRequests, Source source) {
+			for (FilePos request : probeRequests) {
+				String line = source.getCharacters(request.getLine()).toString();
 				String expression = line.substring(request.getStart(), request.getEnd());
-				fileResult.addProbe(request.getLineNumber(), new RangedSelectionProbe(null, expression, request));
+				fileResult.addProbe(request, new SelectionProbe(null, expression, request));
 			}
 		}
 
@@ -170,51 +170,9 @@ public class BabylonianAnalysisExtension extends TruffleInstrument implements LS
 					if (attributes.keySet().containsAll(functionDefinition.parameters)) {
 						final int currentLine = lineNumber;
 						ExampleActive activeRef = exampleActives.stream().filter(i -> i.getLineNumber() == currentLine).findFirst().orElse(null);
-						if (activeRef != null && activeRef.isActive()) {
-							fileResult.addExample(new ExampleProbe(line, lineNumber, source.getLanguage(), functionDefinition, attributes));
-						}
-					}
-				} else {
-					boolean containsProbe = line.contains(PROBE_PREFIX);
-					boolean containsAssertion = line.contains(ASSERTION_PREFIX);
-					if (containsProbe || containsAssertion) {
-						int triggerLine = findTriggerLine(lineNumber + 1, source);
-						if (triggerLine < 0) {
-							break; // End of source reached
-						}
-						AbstractProbe probe;
-						if (containsProbe) {
-							LinkedHashMap<String, String> attributes = getAttributesOrNull(line, PROBE_PREFIX);
-							String expression = attributes == null ? null : attributes.get(StatementProbeWithExpression.PROBE_EXPRESSION_ATTRIBUTE);
-							String exampleNameOrNull = attributes.get(ExampleProbe.EXAMPLE_FILTER_ATTRIBUTE);
-							if (expression == null) {
-								probe = new StatementProbe(exampleNameOrNull, lineNumber);
-							} else {
-								probe = new StatementProbeWithExpression(exampleNameOrNull, lineNumber, expression);
-							}
-						} else {
-							LinkedHashMap<String, String> attributes = getAttributesOrNull(line, ASSERTION_PREFIX);
-							if (attributes == null) {
-								break; // Skip line, assertions must have attributes
-							}
-							String probeExpression;
-							boolean isExpectedValue;
-							String expected = attributes.get(AssertionProbe.ASSERTION_EXPECTED_ATTRIBUTE);
-							if (expected != null) {
-								probeExpression = expected;
-								isExpectedValue = true;
-							} else {
-								String expression = attributes.get(AssertionProbe.ASSERTION_EXPRESSION_ATTRIBUTE);
-								if (expression == null) {
-									break; // Skip line, insufficient attributes for assertion
-								}
-								probeExpression = expression;
-								isExpectedValue = false;
-							}
-							String exampleNameOrNull = attributes.get(ExampleProbe.EXAMPLE_FILTER_ATTRIBUTE);
-							probe = new AssertionProbe(exampleNameOrNull, lineNumber, probeExpression, isExpectedValue);
-						}
-						fileResult.addProbe(triggerLine, probe);
+//						if (activeRef != null && activeRef.isActive()) {
+							fileResult.addExample(new ExampleProbe(line, new FilePos(currentLine), source.getLanguage(), functionDefinition, attributes));
+//						}
 					}
 				}
 			}
@@ -409,11 +367,12 @@ public class BabylonianAnalysisExtension extends TruffleInstrument implements LS
 						}
 					};
 					BabylonianAnalysisFileResult fileResult = result.getOrCreateFile(toVSCodeURI(source.getURI()), source.getLanguage());
-					int startLine = section.getStartLine();
-					AbstractProbe probe = fileResult.get(startLine);
+					// TODO this is not working
+					FilePos pos = FilePos.fromSourceSection(section);
+					AbstractProbe probe = fileResult.get(pos);
 					if (probe == null) {
-						probe = new OrphanProbe(null, startLine);
-						fileResult.addProbe(startLine, probe);
+						probe = new OrphanProbe(null, pos);
+						fileResult.addProbe(pos, probe);
 					}
 					probe.apply(example, section, value, inlineEvalutator);
 				}

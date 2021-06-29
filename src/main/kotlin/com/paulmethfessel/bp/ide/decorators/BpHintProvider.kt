@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.layout.panel
 import com.paulmethfessel.bp.ProbeIConfigurable
+import com.paulmethfessel.bp.ide.FileProbeParser
 import com.paulmethfessel.bp.ide.services.LSPService
 import com.paulmethfessel.bp.ide.services.uri
 import com.paulmethfessel.bp.lang.xml.CommentParser
@@ -67,16 +68,14 @@ class ProbeHintsProvider2: InlayHintsProvider<NoSettings> {
     }
 
     fun showHintForProbe(example: ProbeComment) {
-        val lsp = service<LSPService>()
-        val probes = lsp.lastProbes[original.containingFile.uri.toString()] ?: return
-        val probe = probes.find { it.lineIndex == original.lineNumber } ?: return
-
-        val firstExample = probe.examples.getOrNull(0) ?: return
-        val probeText = firstExample.observedValues.joinToString(", ") { it.displayString }
-
-        val p = factory.inset(factory.text(probeText), top = 0, left = 3)
-        sink.addInlineElement(example.end, true, p, true)
+//        val lsp = service<LSPService>()
+//        val probes = lsp.lastProbes[original.containingFile.uri.toString()] ?: return
+//        val probe = FileProbeParser.matchProbe(original, probes) ?: return
+//
+//        val firstExample = probe.examples.getOrNull(0) ?: return
+//        val probeText = firstExample.observedValues.joinToString(", ") { it.displayString }
+//
+//        val p = factory.inset(factory.text(probeText), top = 0, left = 3)
+//        sink.addInlineElement(example.end, true, p, true)
     }
 }
-
-val PsiElement.lineNumber get() = containingFile.viewProvider.document?.getLineNumber(textOffset)
