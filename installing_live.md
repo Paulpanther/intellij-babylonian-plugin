@@ -9,3 +9,7 @@
 6. Go into `graalvm` and run `path/to/mx/mx build`
 7. After building there should be a `live-installable-java11.jar`
 8. Run `/path/to/graalvm/bin/gu install -f -L /path/to/live-installable-java11.jar` (Here `graalvm` is the actual graalvm instance, not the folder in this repo)
+
+### Running the Server
+1. Navigate to `/path/to/graalvm/bin`
+2. Run `./polyglot --lsp=3000 --jvm --experimental-options --shell --log.level=ALL --verbose`

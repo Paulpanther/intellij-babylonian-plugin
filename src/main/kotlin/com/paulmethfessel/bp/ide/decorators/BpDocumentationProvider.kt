@@ -21,6 +21,10 @@ class BpDocumentationProvider: AbstractDocumentationProvider() {
         return getCachedSingleProbeInfo(element)
     }
 
+    override fun generateDoc(element: PsiElement?, originalElement: PsiElement?): String? {
+        return element?.let { getCachedSingleProbeInfo(it) }
+    }
+
     override fun getCustomDocumentationElement(
         editor: Editor,
         file: PsiFile,

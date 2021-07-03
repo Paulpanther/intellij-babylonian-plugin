@@ -6,11 +6,7 @@
 package de.hpi.swa.liveprogramming.types;
 
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter.Builder;
@@ -47,20 +43,24 @@ public final class BabylonianAnalysisResult {
     public SourceSectionFilter[] getSourceSectionFilters() {
         if (filters == null) {
             filters = new SourceSectionFilter[files.size()];
-            int filterIndex = 0;
+            List<SourceSectionFilter> tmpFilters = new ArrayList<>();
             for (Map.Entry<URI, BabylonianAnalysisFileResult> entry : files.entrySet()) {
-                Builder builder = SourceSectionFilter.newBuilder().tagIs(StandardTags.StatementTag.class);
-                // Check URI rather than source identity as source may change
-                final URI normalizedURI = BabylonianAnalysisExtension.toSourceURI(entry.getKey());
-                builder.sourceIs(s -> s.getURI().equals(normalizedURI));
-                // All probe and assertion lines
+            	for (FilePos position : entry.getValue().probes.keySet()) {
+                    Builder builder = SourceSectionFilter.newBuilder()/*.tagIs(StandardTags.StatementTag.class)*/;
+                    // Check URI rather than source identity as source may change
+                    final URI normalizedURI = BabylonianAnalysisExtension.toSourceURI(entry.getKey());
+                    builder.sourceIs(s -> s.getURI().equals(normalizedURI));
+                    // All probe and assertion lines
 
-                Set<FilePos> positions = entry.getValue().probes.keySet();
-                // TODO maybe filters are wrong?
-                builder.lineIn(toLineRange(positions));
-                builder.columnIn(toColumnRange(positions));
-                filters[filterIndex++] = builder.build();
+                    // TODO maybe filters are wrong?
+                    builder.lineIs(position.getLine());
+                    builder.columnIn(position.getStart(), position.getEnd() + 1);
+//                    builder.columnStartsIn(IndexRange.byLength(position.getStart() - 1, 2));
+//                    builder.columnEndsIn(IndexRange.byLength(position.getEnd() - 1, 2));
+                    tmpFilters.add(builder.build());
+                }
             }
+            filters = tmpFilters.toArray(new SourceSectionFilter[0]);
         }
         return filters;
     }

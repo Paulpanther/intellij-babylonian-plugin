@@ -1,6 +1,7 @@
 package de.hpi.swa.liveprogramming.types;
 
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.tools.utils.json.JSONException;
 import com.oracle.truffle.tools.utils.json.JSONObject;
@@ -25,7 +26,7 @@ public final class FilePos {
 	}
 
 	public static FilePos fromSourceSection(SourceSection section) {
-		return new FilePos(section.getStartLine(), section.getStartColumn(), section.getEndColumn() - 1);
+		return new FilePos(section.getStartLine(), section.getStartColumn() - 1, section.getEndColumn());
 	}
 
 	public FilePos(int line, int start, int end) {
@@ -79,5 +80,14 @@ public final class FilePos {
 	@Override
 	public int hashCode() {
 		return Objects.hash(line, start, end);
+	}
+
+	@Override
+	public String toString() {
+		return "FilePos {" +
+				"line=" + line +
+				", start=" + start +
+				", end=" + end +
+				'}';
 	}
 }
