@@ -54,7 +54,7 @@ class LSPWrapper {
         val identifier = TextDocumentIdentifier(file.toURI().toString())
 
         launcher.remoteProxy.textDocumentService.didOpen(DidOpenTextDocumentParams(document))
-        val result = launcher.remoteProxy.workspaceService.executeCommand(params).get()  // TODO timeout
+        val result = launcher.remoteProxy.workspaceService.executeCommand(params).get() ?: throw InvalidResponseException()  // TODO timeout
         launcher.remoteProxy.textDocumentService.didClose(DidCloseTextDocumentParams(identifier))
 
         try {

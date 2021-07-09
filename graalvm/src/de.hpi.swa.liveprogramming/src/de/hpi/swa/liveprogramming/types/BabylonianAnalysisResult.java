@@ -52,11 +52,12 @@ public final class BabylonianAnalysisResult {
                     builder.sourceIs(s -> s.getURI().equals(normalizedURI));
                     // All probe and assertion lines
 
-                    // TODO maybe filters are wrong?
                     builder.lineIs(position.getLine());
-                    builder.columnIn(position.getStart(), position.getEnd() + 1);
-//                    builder.columnStartsIn(IndexRange.byLength(position.getStart() - 1, 2));
-//                    builder.columnEndsIn(IndexRange.byLength(position.getEnd() - 1, 2));
+//                    builder.columnIn(position.getStart(), position.getEnd() + 1);
+//                    // TODO use columnNotInt
+//					builder.columnNotIn()
+                    builder.columnStartsIn(IndexRange.byLength(position.getStart(), 1));
+                    builder.columnEndsIn(IndexRange.byLength(position.getEnd() + 1, 1));
                     tmpFilters.add(builder.build());
                 }
             }

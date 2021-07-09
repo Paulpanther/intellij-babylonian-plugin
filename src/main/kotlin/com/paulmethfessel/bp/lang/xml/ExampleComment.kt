@@ -23,7 +23,7 @@ class ExampleComment(
     val name = root.getAttribute(":name")
     val params = root.attributes.filter { it.name != ":name" }
 
-//    val state = service<LSPService>().getOrCreateExampleState(original)
+//    val state = lsp.getOrCreateExampleState(original)
 
     override fun annotate(annotator: BpAnnotator) = annotator.annotateExample(this)
     override fun showHint(hinter: ProbeHintsProvider2) = hinter.showHintForExample(this)

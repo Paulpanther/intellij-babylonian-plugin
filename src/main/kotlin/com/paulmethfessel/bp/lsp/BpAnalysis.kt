@@ -15,6 +15,7 @@ data class BpRequestExampleActive(val lineNumber: Int, val active: Boolean)
 data class BpResponse(val result: BpResult)
 data class BpResult(val files: List<BpFile>)
 data class BpFile(val languageId: String, val probes: List<BpProbe>, val uri: String)
-data class BpProbe(val examples: List<BpExample>, val probeType: String, val pos: FilePos)
+enum class BpProbeType { SELECTION, CARET_SELECTION }
+data class BpProbe(val examples: List<BpExample>, var probeType: BpProbeType, val pos: FilePos)
 data class BpExample(val observedValues: List<BpObservedValue>, val exampleName: String)
 data class BpObservedValue(val expression: String, val interopProperties: List<String>, val displayString: String)
