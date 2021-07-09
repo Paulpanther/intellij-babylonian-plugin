@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.event.CaretEvent
 import com.intellij.openapi.editor.event.CaretListener
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.util.TextRange
 import com.paulmethfessel.bp.NoChangeWaiter
 import com.paulmethfessel.bp.ide.psiFile
@@ -21,6 +22,9 @@ class FileSelectionHandler: CaretListener {
     companion object {
         fun register() {
             val multicaster = EditorFactory.getInstance().eventMulticaster
+            multicaster.addDocumentListener(object: DocumentListener {
+
+            }, ApplicationManager.getApplication())
             multicaster.addCaretListener(FileSelectionHandler(), ApplicationManager.getApplication())
         }
     }

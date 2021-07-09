@@ -11,6 +11,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.ui.layout.panel
 import com.paulmethfessel.bp.ProbeIConfigurable
 import com.paulmethfessel.bp.ide.FileProbeParser
+import com.paulmethfessel.bp.ide.events.FileOpenedHandler
 import com.paulmethfessel.bp.ide.events.FileSelectionHandler
 import com.paulmethfessel.bp.ide.services.lsp
 import com.paulmethfessel.bp.ide.uri
@@ -36,6 +37,7 @@ class ProbeHintsProvider2: InlayHintsProvider<NoSettings> {
 
     init {
         FileSelectionHandler.register()
+        FileOpenedHandler.register()
     }
 
     override fun getCollectorFor(
@@ -55,7 +57,7 @@ class ProbeHintsProvider2: InlayHintsProvider<NoSettings> {
 //            val comment = CommentParser.tryParse(element) ?: return true
 //            comment.showHint(hinter)
 
-            val selectionProbe = lsp.lastCaretSelectionProbe ?: return true
+            val selectionProbe = lsp.getSelectionProbeOfFile(element.containingFile.uri.toString()) ?: return true
             val lineEnd = editor.document.getLineEndOffset(selectionProbe.pos.line)
             val probeText = selectionProbe.examples[0].observedValues.joinToString(", ") { it.displayString }
             val p = factory.inset(factory.text(probeText), top = 6, left = 3)

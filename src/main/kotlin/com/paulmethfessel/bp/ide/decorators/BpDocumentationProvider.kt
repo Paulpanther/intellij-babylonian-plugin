@@ -43,9 +43,9 @@ class BpDocumentationProvider: AbstractDocumentationProvider() {
         return probe.examples[0].observedValues.joinToString(", ") { it.displayString }
     }
 
-    private fun requestSingleProbeInfo(element: PsiElement): String? {
-        val lspFile = lsp.analyze(element.containingFile, listOf(element.filePos)) ?: return null
-        val probe = lspFile.probes.firstOrNull { it.probeType == BpProbeType.SELECTION } ?: return null
-        return probe.examples[0].observedValues.joinToString(", ") { it.displayString }
-    }
+//    private fun requestSingleProbeInfo(element: PsiElement): String? {
+//        val lspFile = lsp.analyze(element.containingFile, listOf(element.filePos)) ?: return null
+//        val probe = lspFile.probes.firstOrNull { it.probeType == BpProbeType.SELECTION } ?: return null
+//        return probe.examples[0].observedValues.joinToString(", ") { it.displayString }
+//    }
 }

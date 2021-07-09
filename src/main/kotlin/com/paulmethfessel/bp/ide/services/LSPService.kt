@@ -3,21 +3,12 @@ package com.paulmethfessel.bp.ide.services
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
-import com.intellij.openapi.editor.CaretAction
-import com.intellij.openapi.editor.Document
-import com.intellij.openapi.editor.EditorFactory
-import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.util.FileContentUtil
 import com.paulmethfessel.bp.ide.*
 import com.paulmethfessel.bp.lsp.*
-import java.io.File
-import java.net.URI
 
 //@State(name = "com.paulmethfessel.babylonian")
 @Service
@@ -32,24 +23,26 @@ class LSPService/*: PersistentStateComponent<PluginState>*/ {
     private val _lastProbes = mutableMapOf<String, List<BpProbe>>()
     val lastProbes = _lastProbes as Map<String, List<BpProbe>>
 
-    var lastCaretSelectionProbe: BpProbe? = null
-        private set
+    private val lastCaretSelectionProbes = mutableMapOf<String, BpProbe>()
 
-    fun connect() {
+    fun connect(): Boolean {
         try {
             lsp.connect()
+            notify("Connected to GraalVM", "Connection at ...")
+            return true
         } catch (e: ServerConnectionFailedException) {
             notifyError("Failed connecting", "Could not connect to language server")
         } catch (e: AlreadyConnectedException) {
             notify("Failed connecting", "Already connected to Language Server")
         }
-
-        notify("Connected to GraalVM", "Connection at ...")
+        return false
     }
 
     fun disconnect() {
         lsp.disconnect()
     }
+
+    fun getSelectionProbeOfFile(uri: String) = lastCaretSelectionProbes[uri]
 
 //    fun analyze(doc: Document, probe: FilePos): BpProbe? {
 //        if (!connected) return null
@@ -62,15 +55,24 @@ class LSPService/*: PersistentStateComponent<PluginState>*/ {
 //        return lspFile.probes.find { it.probeType == "SELECTION" }
 //    }
 
-    fun analyze(doc: Document) {
-        val file = doc.psiFile ?: return
-        analyze(file)
-    }
+    fun analyzeForReload(file: PsiFile) {
+        // find possible probes and current selection
+        val probes = FileProbeParser.findProbes(file).toMutableList()
+        val selectionPos = lastCaretSelectionProbes[file.uri.toString()]?.pos
+        selectionPos?.let { probes += it }
 
-    fun analyze(file: PsiFile) {
-        val probes = FileProbeParser.findProbes(file)
         val lspFile = analyze(file, probes) ?: return
+
+        // Store all probes and also selection
+        if (selectionPos != null) {
+            val selectionProbe = lspFile.probes.find { it.pos == selectionPos }
+            selectionProbe?.let {
+                it.probeType = BpProbeType.CARET_SELECTION
+                lastCaretSelectionProbes[file.uri.toString()] = selectionProbe
+            }
+        }
         _lastProbes[lspFile.uri] = lspFile.probes
+
         FileContentUtil.reparseOpenedFiles()
     }
 
@@ -78,15 +80,18 @@ class LSPService/*: PersistentStateComponent<PluginState>*/ {
         val lspFile = analyze(file, listOf(selectedProbe)) ?: return
         val probe = lspFile.probes.find { it.probeType == BpProbeType.SELECTION } ?: return
         probe.probeType = BpProbeType.CARET_SELECTION
-        lastCaretSelectionProbe = probe
+        lastCaretSelectionProbes[lspFile.uri] = probe
         FileContentUtil.reparseOpenedFiles()
     }
 
-    fun analyze(file: PsiFile, probes: List<FilePos>): BpFile? {
-        if (!connected) return null
+    private fun analyze(file: PsiFile, probes: List<FilePos>): BpFile? {
+        if (!connected) {
+            if (!connect()) return null
+        }
 
         val currentUri = file.uri.toString()
         val result = lsp.analyze(file.virtualFile.file, probes)
+        if (result.files.isEmpty()) return null
         return result.files.find { it.uri == currentUri }
     }
 
