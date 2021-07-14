@@ -19,6 +19,10 @@ import java.awt.event.MouseEvent
 
 class ExampleLineMarker: LineMarkerProvider {
     override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
+        return tryGetExampleLineMarkerInfo(element)
+    }
+
+    private fun tryGetExampleLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
         if (element !is PsiComment) return null
         val comment = CommentParser.tryParse(element) ?: return null
         if (comment !is ExampleComment) return null
@@ -39,6 +43,6 @@ class ExampleLineMarker: LineMarkerProvider {
             { "Example" },
             onClick,
             GutterIconRenderer.Alignment.CENTER,
-            {"Hello world"})
+            { "Hello world" })
     }
 }
