@@ -1,7 +1,9 @@
 package com.paulmethfessel.bp.ide
 
 import com.intellij.lang.javascript.psi.JSRecursiveWalkingElementVisitor
+import com.intellij.openapi.editor.Caret
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.SelectionModel
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vfs.VirtualFile
@@ -24,10 +26,10 @@ val Document.psiFile get(): PsiFile? {
 val PsiElement.lineNumber get() = document.getLineNumber(textOffset)
 
 data class FilePos(val line: Int, val start: Int, val end: Int) {
-//    fun toTextRange(document: Document): TextRange {
-//        val lineStart = document.getLineStartOffset(line)
-//        return TextRange(lineStart + start, lineStart + end)
-//    }
+    fun toTextRange(document: Document): TextRange {
+        val lineStart = document.getLineStartOffset(line)
+        return TextRange(lineStart + start, lineStart + end)
+    }
 }
 
 fun TextRange.toFilePos(document: Document): FilePos {
@@ -54,3 +56,6 @@ fun PsiFile.visit(visitor: (PsiElement) -> Unit) {
 
 val VirtualFile.file get() = File(path)
 val PsiFile.uri: URI get() = virtualFile.file.toURI()
+
+val Caret.selectionRange get() = TextRange(selectionStart, selectionEnd)
+val SelectionModel.selectionRange get() = TextRange(selectionStart, selectionEnd)

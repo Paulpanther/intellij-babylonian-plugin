@@ -1,5 +1,6 @@
 package com.paulmethfessel.bp.ide.decorators
 
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.Annotator
 import com.intellij.lang.annotation.HighlightSeverity
@@ -7,7 +8,12 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors.*
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.paulmethfessel.bp.ide.FileProbeParser
+import com.paulmethfessel.bp.ide.document
+import com.paulmethfessel.bp.ide.events.RemoveLockedProbeAction
+import com.paulmethfessel.bp.ide.services.lsp
+import com.paulmethfessel.bp.ide.uri
 import com.paulmethfessel.bp.lang.xml.ExampleComment
 import com.paulmethfessel.bp.lang.xml.ProbeComment
 
@@ -23,6 +29,26 @@ class BpAnnotator: Annotator {
 
         if (FileProbeParser.isPossibleProbe(element)) {
             annotatePossibleProbe(element)
+        }
+
+        if (element is PsiFile) {
+            annotateLockedProbes(element)
+        }
+    }
+
+    /**
+     * This is called once per file
+     */
+    private fun annotateLockedProbes(file: PsiFile) {
+        val uri = file.uri.toString()
+        val probes = lsp.getProbeStatesForFile(uri)
+        for (probe in probes) {
+            val range = probe.pos.toTextRange(file.document)
+            holder.newSilentAnnotation(HighlightSeverity.WARNING)
+                .highlightType(ProblemHighlightType.WARNING)
+                .range(range)
+                .withFix(RemoveLockedProbeAction(uri, probe.pos))
+                .create()
         }
     }
 

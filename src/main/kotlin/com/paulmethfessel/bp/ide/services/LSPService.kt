@@ -11,6 +11,7 @@ import com.intellij.util.FileContentUtil
 import com.paulmethfessel.bp.ide.*
 import com.paulmethfessel.bp.ide.persistance.ExampleState
 import com.paulmethfessel.bp.ide.persistance.PluginState
+import com.paulmethfessel.bp.ide.persistance.ProbeState
 import com.paulmethfessel.bp.lsp.*
 
 @Service
@@ -57,24 +58,46 @@ class LSPService {
 //    }
 
     fun analyzeForReload(file: PsiFile) {
-        // find possible probes and current selection
-        val probes = FileProbeParser.findProbes(file).toMutableList()
-        val selectionPos = lastCaretSelectionProbes[file.uri.toString()]?.pos
-        selectionPos?.let { probes += it }
-
+        val probes = getRelevantProbePositions(file)
         val lspFile = analyze(file, probes) ?: return
 
-        // Store all probes and also selection
+        updateLockedProbes(file, lspFile.probes)
+        updateSelectionProbe(file, lspFile.probes)
+        _lastProbes[lspFile.uri] = lspFile.probes
+
+        FileContentUtil.reparseOpenedFiles()
+    }
+
+    private fun updateLockedProbes(file: PsiFile, newProbes: List<BpProbe>) {
+        val lockedProbes = getProbeStatesForFile(file.uri.toString())
+        for (probe in lockedProbes) {
+            val selectionProbe = newProbes.find { it.pos == probe.pos }
+            selectionProbe?.let {
+                it.probeType = BpProbeType.CARET_SELECTION
+                probe.lastProbeValue = selectionProbe
+            }
+        }
+    }
+
+    private fun updateSelectionProbe(file: PsiFile, newProbes: List<BpProbe>) {
+        val selectionPos = lastCaretSelectionProbes[file.uri.toString()]?.pos
         if (selectionPos != null) {
-            val selectionProbe = lspFile.probes.find { it.pos == selectionPos }
+            val selectionProbe = newProbes.find { it.pos == selectionPos }
             selectionProbe?.let {
                 it.probeType = BpProbeType.CARET_SELECTION
                 lastCaretSelectionProbes[file.uri.toString()] = selectionProbe
             }
         }
-        _lastProbes[lspFile.uri] = lspFile.probes
+    }
 
-        FileContentUtil.reparseOpenedFiles()
+    private fun getRelevantProbePositions(file: PsiFile): List<FilePos> {
+        val possibleProbes = FileProbeParser.findProbes(file)
+        val selectionPos = lastCaretSelectionProbes[file.uri.toString()]?.pos
+        val lockedProbes = getProbeStatesForFile(file.uri.toString()).map { it.pos }
+
+        val probes = (possibleProbes + lockedProbes).toMutableList()
+        selectionPos?.let { probes += it }
+        return probes
     }
 
     fun analyzeCaretSelection(file: PsiFile, selectedProbe: FilePos) {
@@ -111,6 +134,22 @@ class LSPService {
         val newExample = ExampleState(uri, line)
         temporaryState.examples += newExample
         return newExample
+    }
+
+    fun createProbeStateFromSelected(file: String): Boolean {
+        val selected = lastCaretSelectionProbes[file] ?: return false
+        temporaryState.lockedProbes += ProbeState(file, selected.pos, selected)
+        FileContentUtil.reparseOpenedFiles()
+        return true
+    }
+
+    fun getProbeStatesForFile(file: String): List<ProbeState> {
+        return temporaryState.lockedProbes.filter { it.file == file }
+    }
+
+    fun removeProbeState(file: String, pos: FilePos) {
+        temporaryState.lockedProbes.removeIf { it.file == file && it.pos == pos }
+        FileContentUtil.reparseOpenedFiles()
     }
 }
 

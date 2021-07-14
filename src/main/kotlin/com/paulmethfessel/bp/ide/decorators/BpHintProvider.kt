@@ -4,7 +4,6 @@ package com.paulmethfessel.bp.ide.decorators
 
 import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
-import com.intellij.openapi.editor.BlockInlayPriority
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
@@ -19,6 +18,7 @@ import com.paulmethfessel.bp.ide.uri
 import com.paulmethfessel.bp.lang.xml.CommentParser
 import com.paulmethfessel.bp.lang.xml.ExampleComment
 import com.paulmethfessel.bp.lang.xml.ProbeComment
+import com.paulmethfessel.bp.lsp.BpProbe
 import javax.swing.JComponent
 
 class JavaPanelHelper {
@@ -57,9 +57,20 @@ class ProbeHintsProvider2: InlayHintsProvider<NoSettings> {
 
             if (tryShowCommentHint(element)) return true
 
-            if (element is PsiFile && tryShowSelectionProbeHint(element)) return true
-
+            if (element is PsiFile) collectFile(element)
             return true
+        }
+
+        private fun collectFile(file: PsiFile) {
+            val lockedProbes = lsp.getProbeStatesForFile(file.uri.toString())
+            for (probe in lockedProbes) {
+                probe.lastProbeValue?.let { showSelectionProbeHint(it) }
+            }
+
+            val selectionProbe = lsp.getSelectionProbeOfFile(file.uri.toString()) ?: return
+            if (lockedProbes.all { it.pos != selectionProbe.pos }) {
+                showSelectionProbeHint(selectionProbe)
+            }
         }
 
         private fun tryShowCommentHint(element: PsiElement): Boolean {
@@ -69,15 +80,13 @@ class ProbeHintsProvider2: InlayHintsProvider<NoSettings> {
             return true
         }
 
-        private fun tryShowSelectionProbeHint(element: PsiElement): Boolean {
-            val selectionProbe = lsp.getSelectionProbeOfFile(element.containingFile.uri.toString()) ?: return false
-            val lineEnd = editor.document.getLineEndOffset(selectionProbe.pos.line)
-            if (selectionProbe.examples.isNotEmpty()) {
-                val probeText = selectionProbe.examples[0].observedValues.joinToString(", ") { it.displayString }
+        private fun showSelectionProbeHint(probe: BpProbe) {
+            val lineEnd = editor.document.getLineEndOffset(probe.pos.line)
+            if (probe.examples.isNotEmpty()) {
+                val probeText = probe.examples[0].observedValues.joinToString(", ") { it.displayString }
                 val p = textPresentation(probeText)
                 sink.addInlineElement(lineEnd, true, p, true)
             }
-            return true
         }
     }
 

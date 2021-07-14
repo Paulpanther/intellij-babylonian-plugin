@@ -11,6 +11,7 @@ import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.util.TextRange
 import com.paulmethfessel.bp.NoChangeWaiter
 import com.paulmethfessel.bp.ide.psiFile
+import com.paulmethfessel.bp.ide.selectionRange
 import com.paulmethfessel.bp.ide.services.lsp
 import com.paulmethfessel.bp.ide.toFilePos
 
@@ -60,5 +61,3 @@ class FileSelectionHandler: CaretListener {
 //        } else null
 //    }
 }
-
-private val Caret.selectionRange get() = TextRange(selectionStart, selectionEnd)

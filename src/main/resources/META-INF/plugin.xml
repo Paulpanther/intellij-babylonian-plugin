@@ -16,6 +16,9 @@
         <intentionAction id="blaksdnlas">
             <className>com.paulmethfessel.bp.ide.events.BpAddExampleIntentionAction</className>
         </intentionAction>
+        <intentionAction id="addprobebp">
+            <className>com.paulmethfessel.bp.ide.events.AddLockedProbeAction</className>
+        </intentionAction>
         <documentationProvider implementation="com.paulmethfessel.bp.ide.decorators.BpDocumentationProvider"/>
         <codeInsight.lineMarkerProvider implementationClass="com.paulmethfessel.bp.ide.decorators.ExampleLineMarker" language="JavaScript"/>
     </extensions>
