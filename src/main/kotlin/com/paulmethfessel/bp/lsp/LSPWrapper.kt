@@ -3,6 +3,7 @@ package com.paulmethfessel.bp.lsp
 import com.google.gson.Gson
 import com.google.gson.JsonSyntaxException
 import com.paulmethfessel.bp.ide.FilePos
+import com.paulmethfessel.bp.ide.persistance.ExampleState
 import org.eclipse.lsp4j.*
 import org.eclipse.lsp4j.jsonrpc.Launcher
 import org.eclipse.lsp4j.launch.LSPLauncher
@@ -46,8 +47,13 @@ class LSPWrapper {
     }
 
     @Throws(InvalidResponseException::class, NotConnectedException::class)
-    fun analyze(file: File, probes: List<FilePos>): BpResult {
-        val params = createBpAnalysisCommandParams(file.toURI(), probes, listOf())
+    fun analyze(file: File, probes: List<FilePos>, exampleStates: List<ExampleState>): BpResult {
+        val exampleRefs = exampleStates.mapNotNull { example ->
+            example.lineNumber?.let {
+                BpRequestExampleActive(it + 1, example.active)
+            }
+        }
+        val params = createBpAnalysisCommandParams(file.toURI(), probes, exampleRefs)
         val launcher = launcher ?: throw NotConnectedException()
 
         val document = TextDocumentItem(file.toURI().toString(), file.extension, version++, file.contents)

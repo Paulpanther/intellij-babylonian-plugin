@@ -6,6 +6,7 @@ import com.intellij.codeInsight.hints.*
 import com.intellij.codeInsight.hints.presentation.PresentationFactory
 import com.intellij.openapi.editor.BlockInlayPriority
 import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.ui.layout.panel
@@ -15,6 +16,7 @@ import com.paulmethfessel.bp.ide.events.FileOpenedHandler
 import com.paulmethfessel.bp.ide.events.FileSelectionHandler
 import com.paulmethfessel.bp.ide.services.lsp
 import com.paulmethfessel.bp.ide.uri
+import com.paulmethfessel.bp.lang.xml.CommentParser
 import com.paulmethfessel.bp.lang.xml.ExampleComment
 import com.paulmethfessel.bp.lang.xml.ProbeComment
 import javax.swing.JComponent
@@ -53,30 +55,39 @@ class ProbeHintsProvider2: InlayHintsProvider<NoSettings> {
             hinter.sink = sink
             hinter.factory = factory
 
-//            if (element !is PsiComment) return true
-//            val comment = CommentParser.tryParse(element) ?: return true
-//            comment.showHint(hinter)
+            if (tryShowCommentHint(element)) return true
 
-            val selectionProbe = lsp.getSelectionProbeOfFile(element.containingFile.uri.toString()) ?: return true
+            if (element is PsiFile && tryShowSelectionProbeHint(element)) return true
+
+            return true
+        }
+
+        private fun tryShowCommentHint(element: PsiElement): Boolean {
+            if (element !is PsiComment) return false
+            val comment = CommentParser.tryParse(element) ?: return false
+            comment.showHint(this@ProbeHintsProvider2)
+            return true
+        }
+
+        private fun tryShowSelectionProbeHint(element: PsiElement): Boolean {
+            val selectionProbe = lsp.getSelectionProbeOfFile(element.containingFile.uri.toString()) ?: return false
             val lineEnd = editor.document.getLineEndOffset(selectionProbe.pos.line)
-            val probeText = selectionProbe.examples[0].observedValues.joinToString(", ") { it.displayString }
-            val p = factory.inset(factory.text(probeText), top = 6, left = 3)
-            sink.addInlineElement(lineEnd, true, p, true)
-
-            return false
+            if (selectionProbe.examples.isNotEmpty()) {
+                val probeText = selectionProbe.examples[0].observedValues.joinToString(", ") { it.displayString }
+                val p = textPresentation(probeText)
+                sink.addInlineElement(lineEnd, true, p, true)
+            }
+            return true
         }
     }
 
     fun showHintForExample(example: ExampleComment) {
-        val p = factory.text("Example")
-        sink.addBlockElement(example.end,
-            relatesToPrecedingText = true,
-            showAbove = true,
-            priority = BlockInlayPriority.CODE_VISION,
-            presentation = p
-        )
+        val active = example.state.active
+        val text = textPresentation("active=\"$active\"")
+        sink.addInlineElement(example.end, true, text, true)
     }
 
+    @Deprecated("ProbeComment will be removed")
     fun showHintForProbe(example: ProbeComment) {
         val probes = lsp.lastProbes[original.containingFile.uri.toString()] ?: return
         val probe = FileProbeParser.matchProbe(original, probes) ?: return
@@ -84,7 +95,8 @@ class ProbeHintsProvider2: InlayHintsProvider<NoSettings> {
         val firstExample = probe.examples.getOrNull(0) ?: return
         val probeText = firstExample.observedValues.joinToString(", ") { it.displayString }
 
-        val p = factory.inset(factory.text(probeText), top = 0, left = 3)
-        sink.addInlineElement(example.end, true, p, true)
+        sink.addInlineElement(example.end, true, textPresentation(probeText), true)
     }
+
+    private fun textPresentation(text: String) = factory.inset(factory.text(text), top = 6, left = 3)
 }

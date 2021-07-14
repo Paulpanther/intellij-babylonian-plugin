@@ -367,7 +367,6 @@ public class BabylonianAnalysisExtension extends TruffleInstrument implements LS
 						}
 					};
 					BabylonianAnalysisFileResult fileResult = result.getOrCreateFile(toVSCodeURI(source.getURI()), source.getLanguage());
-					// TODO this is not working
 					FilePos pos = FilePos.fromSourceSection(section);
 					AbstractProbe probe = fileResult.get(pos);
 					if (probe == null) {

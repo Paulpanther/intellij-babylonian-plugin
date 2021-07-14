@@ -6,6 +6,7 @@ import com.intellij.xml.util.XmlUtil
 import com.paulmethfessel.bp.ide.decorators.BpAnnotator
 import com.paulmethfessel.bp.ide.decorators.ProbeHintsProvider2
 
+@Deprecated("Will be removed")
 class ProbeComment(
     root: XmlTag,
     offset: Int

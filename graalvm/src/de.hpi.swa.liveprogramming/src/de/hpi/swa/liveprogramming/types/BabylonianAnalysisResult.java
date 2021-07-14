@@ -53,11 +53,11 @@ public final class BabylonianAnalysisResult {
                     // All probe and assertion lines
 
                     builder.lineIs(position.getLine());
-//                    builder.columnIn(position.getStart(), position.getEnd() + 1);
-//                    // TODO use columnNotInt
-//					builder.columnNotIn()
-                    builder.columnStartsIn(IndexRange.byLength(position.getStart(), 1));
-                    builder.columnEndsIn(IndexRange.byLength(position.getEnd() + 1, 1));
+                    // TODO use better filters
+                    builder.columnIn(position.getStart(), position.getEnd() + 1);
+                    builder.columnNotIn(IndexRange.between(1, position.getStart()), IndexRange.byLength(position.getEnd() + 1, 1));
+//                    builder.columnStartsIn(IndexRange.byLength(position.getStart(), 1));
+//                    builder.columnEndsIn(IndexRange.byLength(position.getEnd() + 1, 1));
                     tmpFilters.add(builder.build());
                 }
             }

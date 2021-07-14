@@ -5,17 +5,16 @@ import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.FileContentUtil
 import com.paulmethfessel.bp.ide.*
+import com.paulmethfessel.bp.ide.persistance.ExampleState
+import com.paulmethfessel.bp.ide.persistance.PluginState
 import com.paulmethfessel.bp.lsp.*
 
-//@State(name = "com.paulmethfessel.babylonian")
 @Service
-class LSPService/*: PersistentStateComponent<PluginState>*/ {
-
-//    private var state = PluginState()
-
+class LSPService {
     private val lsp = LSPWrapper()
 
     val connected get() = lsp.connected
@@ -24,6 +23,8 @@ class LSPService/*: PersistentStateComponent<PluginState>*/ {
     val lastProbes = _lastProbes as Map<String, List<BpProbe>>
 
     private val lastCaretSelectionProbes = mutableMapOf<String, BpProbe>()
+
+    private val temporaryState = PluginState()
 
     fun connect(): Boolean {
         try {
@@ -90,7 +91,7 @@ class LSPService/*: PersistentStateComponent<PluginState>*/ {
         }
 
         val currentUri = file.uri.toString()
-        val result = lsp.analyze(file.virtualFile.file, probes)
+        val result = lsp.analyze(file.virtualFile.file, probes, temporaryState.examples)
         if (result.files.isEmpty()) return null
         return result.files.find { it.uri == currentUri }
     }
@@ -100,24 +101,17 @@ class LSPService/*: PersistentStateComponent<PluginState>*/ {
         Notifications.Bus.notify(Notification("Bp Notification Group", title, content, type))
     }
 
-//    override fun getState() = state
-//
-//    override fun loadState(state: PluginState) {
-//        // TODO clear unused examples
-//        this.state = state
-//    }
+    fun getOrCreateExampleState(example: PsiElement): ExampleState {
+        val file = example.containingFile
+        val line = example.lineNumber
+        val uri = file.uri.toString()
+        val existingExample = temporaryState.examples.find { it.uri == uri && it.lineNumber == line }
+        if (existingExample != null) return existingExample
 
-//    fun getOrCreateExampleState(example: PsiElement): ExampleState {
-//        val file = example.containingFile
-//        val line = example.lineNumber
-//        val uri = file.uri.toString()
-//        val existingExample = state.examples.find { it.uri == uri && it.lineNumber == line }
-//        if (existingExample != null) return existingExample
-//
-//        val newExample = ExampleState(uri, line)
-//        state.examples += newExample
-//        return newExample
-//    }
+        val newExample = ExampleState(uri, line)
+        temporaryState.examples += newExample
+        return newExample
+    }
 }
 
 val lsp get() = service<LSPService>()

@@ -1,17 +1,15 @@
 package com.paulmethfessel.bp.lang.xml
 
-import com.intellij.openapi.components.service
 import com.intellij.psi.PsiElement
 import com.intellij.psi.xml.XmlTag
 import com.intellij.psi.xml.XmlTokenType
 import com.intellij.xml.util.XmlUtil
 import com.paulmethfessel.bp.ide.decorators.BpAnnotator
 import com.paulmethfessel.bp.ide.decorators.ProbeHintsProvider2
-import com.paulmethfessel.bp.ide.persistance.ExampleState
-import com.paulmethfessel.bp.ide.services.LSPService
+import com.paulmethfessel.bp.ide.services.lsp
 
 class ExampleComment(
-    val original: PsiElement,
+    original: PsiElement,
     root: XmlTag,
     offset: Int
 ): CommentElement(root, offset) {
@@ -23,7 +21,7 @@ class ExampleComment(
     val name = root.getAttribute(":name")
     val params = root.attributes.filter { it.name != ":name" }
 
-//    val state = lsp.getOrCreateExampleState(original)
+    val state = lsp.getOrCreateExampleState(original)
 
     override fun annotate(annotator: BpAnnotator) = annotator.annotateExample(this)
     override fun showHint(hinter: ProbeHintsProvider2) = hinter.showHintForExample(this)
