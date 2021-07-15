@@ -2,10 +2,15 @@
 
 For dev setup in intellij see `dev_setup_intellij.md`
 
+### Installation
+1. Grap the plugin zip from the latest release and drag-and-drop it into intellij
+2. Install GraalVM (see dev setup)
+3. Install the `live-programming.jar` from the releases on GraalVM (see dev setup)
+4. Open the settings and under `Tools/Babylonian` set the path to your GraalVM
+5. Now you can add examples and probes
+
+### Description
 <!-- Plugin description -->
-**IntelliJ Platform Plugin Template** is a repository that provides a pure boilerplate template to make it easier to create a new plugin project (check the [Creating a repository from a template][gh:template] article).
-
-The main goal of this template is to speed up the setup phase of plugin development for both new and experienced developers by preconfiguring the project scaffold and CI, linking to the proper documentation pages, and keeping everything organized.
-
-[gh:template]: https://help.github.com/en/enterprise/2.20/user/github/creating-cloning-and-archiving-repositories/creating-a-repository-from-a-template
+This plugin adds babylonian live-programming features to Intellij.
+It allows to add examples in code and view the probe values by hover or selection.
 <!-- Plugin description end -->
