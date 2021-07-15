@@ -170,9 +170,9 @@ public class BabylonianAnalysisExtension extends TruffleInstrument implements LS
 					if (attributes.keySet().containsAll(functionDefinition.parameters)) {
 						final int currentLine = lineNumber;
 						ExampleActive activeRef = exampleActives.stream().filter(i -> i.getLineNumber() == currentLine).findFirst().orElse(null);
-//						if (activeRef != null && activeRef.isActive()) {
+						if (activeRef != null && activeRef.isActive()) {
 							fileResult.addExample(new ExampleProbe(line, new FilePos(currentLine), source.getLanguage(), functionDefinition, attributes));
-//						}
+						}
 					}
 				}
 			}
