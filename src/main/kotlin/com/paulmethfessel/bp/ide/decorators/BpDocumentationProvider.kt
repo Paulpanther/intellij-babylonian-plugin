@@ -4,6 +4,7 @@ import com.intellij.lang.documentation.AbstractDocumentationProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiWhiteSpace
 import com.paulmethfessel.bp.ide.FileProbeParser
 import com.paulmethfessel.bp.ide.filePos
 import com.paulmethfessel.bp.ide.services.lsp
@@ -29,10 +30,20 @@ class BpDocumentationProvider: AbstractDocumentationProvider() {
         contextElement: PsiElement?,
         targetOffset: Int
     ): PsiElement? {
-        if (contextElement != null && FileProbeParser.isPossibleProbe(contextElement)) {
-            return contextElement.parent
+        if (contextElement != null) {
+            tryGetProbeElement(contextElement)?.let { return it.parent }
+            if (contextElement is PsiWhiteSpace) {
+                tryGetProbeElement(contextElement.prevSibling)?.let { return it.prevSibling }
+            }
         }
         return super.getCustomDocumentationElement(editor, file, contextElement, targetOffset)
+    }
+
+    private fun tryGetProbeElement(contextElement: PsiElement): PsiElement? {
+        if (FileProbeParser.isPossibleProbe(contextElement)) {
+            return contextElement
+        }
+        return null
     }
 
     private fun getCachedSingleProbeInfo(element: PsiElement): String? {
@@ -40,7 +51,7 @@ class BpDocumentationProvider: AbstractDocumentationProvider() {
         val probes = lsp.lastProbes[currentUri] ?: return null
         val probe = FileProbeParser.matchProbe(element, probes) ?: return null
 
-        return probe.examples[0].observedValues.joinToString(", ") { it.displayString }
+        return ProbeDocumentationBuilder(probe).build()
     }
 
 //    private fun requestSingleProbeInfo(element: PsiElement): String? {

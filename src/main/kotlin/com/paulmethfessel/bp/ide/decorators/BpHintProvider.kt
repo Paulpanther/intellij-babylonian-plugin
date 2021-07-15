@@ -83,8 +83,7 @@ class ProbeHintsProvider2: InlayHintsProvider<NoSettings> {
         private fun showSelectionProbeHint(probe: BpProbe) {
             val lineEnd = editor.document.getLineEndOffset(probe.pos.line)
             if (probe.examples.isNotEmpty()) {
-                val probeText = probe.examples[0].observedValues.joinToString(", ") { it.displayString }
-                val p = textPresentation(probeText)
+                val p = ProbePresentationBuilder(probe, factory).build()
                 sink.addInlineElement(lineEnd, true, p, true)
             }
         }
