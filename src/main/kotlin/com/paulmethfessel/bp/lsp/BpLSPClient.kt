@@ -11,8 +11,6 @@ class BpLSPClient: LanguageClient {
     override fun telemetryEvent(obj: Any?) {}
     override fun publishDiagnostics(diagnostics: PublishDiagnosticsParams?) {}
     override fun showMessage(messageParams: MessageParams?) {}
-    override fun showMessageRequest(requestParams: ShowMessageRequestParams?): CompletableFuture<MessageActionItem> {
-        return CompletableFuture()
-    }
+    override fun showMessageRequest(requestParams: ShowMessageRequestParams?) = CompletableFuture<MessageActionItem>()
     override fun logMessage(message: MessageParams?) {}
 }

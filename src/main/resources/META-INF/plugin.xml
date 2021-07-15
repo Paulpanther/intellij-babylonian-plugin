@@ -21,6 +21,8 @@
         </intentionAction>
         <documentationProvider implementation="com.paulmethfessel.bp.ide.decorators.BpDocumentationProvider"/>
         <codeInsight.lineMarkerProvider implementationClass="com.paulmethfessel.bp.ide.decorators.ExampleLineMarker" language="JavaScript"/>
+        <applicationConfigurable parentId="tools" instance="com.paulmethfessel.bp.ide.settings.BabylonianSettingsConfigurable" id="BabylonianSettings" displayName="Babylonian" />
+        <applicationService serviceImplementation="com.paulmethfessel.bp.ide.settings.BabylonianSettingsState"/>
     </extensions>
 
     <actions>
