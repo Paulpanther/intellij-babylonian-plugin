@@ -1,0 +1,8 @@
+Babylonian in Intellij
+
+Entwickelt von Paul Methfessel im Rahmen des Live Programming Seminars SS2021 am HPI.
+
+
+In diesem Projekt haben wir versucht Features und grafische Elemente von Babylonian Programming wie Probes und Examples in bestehende Designs wie den Debugger von herkömmlichen IDEs zu übersetzen.
+Damit erreichen ELP-Features nicht nur mehr Programmierer*innen, sie sind auch einfacher zu verstehen.
+Wir haben uns für einen Implementierung in Intellij IDEA entschieden, da der Editor Plugins viele grafische Möglichkeiten bietet.
