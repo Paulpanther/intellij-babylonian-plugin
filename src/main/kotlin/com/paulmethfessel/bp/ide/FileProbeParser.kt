@@ -36,7 +36,6 @@ object FileProbeParser {
                 probes += element.filePos
             }
         }
-
         return probes
     }
 

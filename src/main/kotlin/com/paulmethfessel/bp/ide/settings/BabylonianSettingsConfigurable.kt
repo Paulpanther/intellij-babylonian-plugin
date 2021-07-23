@@ -5,14 +5,11 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
-import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.options.Configurable
-import com.intellij.openapi.ui.TextBrowseFolderListener
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.FormBuilder
 import com.intellij.util.xmlb.XmlSerializerUtil
 import javax.swing.JComponent
@@ -29,11 +26,13 @@ class BabylonianSettingsConfigurable: Configurable {
     override fun isModified() =
         babylonianSettings.graalPath != component?.graalPath
                 || babylonianSettings.startWithDebugger != component?.startWithDebugger
+                || babylonianSettings.useInternalProcess != component?.useInternalProcess
 
     override fun apply() {
         component?.let {
             babylonianSettings.graalPath = it.graalPath
             babylonianSettings.startWithDebugger = it.startWithDebugger
+            babylonianSettings.useInternalProcess = it.useInternalProcess
         }
     }
 
@@ -41,6 +40,7 @@ class BabylonianSettingsConfigurable: Configurable {
         component?.apply {
             graalPath = babylonianSettings.graalPath
             startWithDebugger = babylonianSettings.startWithDebugger
+            useInternalProcess = babylonianSettings.useInternalProcess
         }
     }
 
@@ -58,6 +58,7 @@ class BabylonianSettingsConfigurable: Configurable {
     storages = [Storage("BabylonianPluginSettings.xml")]
 )
 class BabylonianSettingsState: PersistentStateComponent<BabylonianSettingsState>, Disposable {
+    var useInternalProcess = true
     var graalPath: String = ""
     var startWithDebugger = false
 
@@ -76,6 +77,7 @@ class BabylonianSettingsComponent {
     val panel: JPanel
     private val graalPathText = buildGraalPathField()
     private val startWithDebuggerCheckbox = JBCheckBox("Start GraalVM with debugger?")
+    private val useInternalProcessCheckbox = JBCheckBox("Start GraalVM when babylonian features are used?")
 
     val preferredFocusedComponent = graalPathText
 
@@ -85,13 +87,22 @@ class BabylonianSettingsComponent {
     var startWithDebugger
         get() = startWithDebuggerCheckbox.isSelected
         set(value) { startWithDebuggerCheckbox.isSelected = value }
+    var useInternalProcess
+        get() = useInternalProcessCheckbox.isSelected
+        set(value) { useInternalProcessCheckbox.isSelected = value }
 
     init {
         panel = FormBuilder.createFormBuilder().apply {
+            addComponent(useInternalProcessCheckbox, 1)
             addLabeledComponent(JBLabel("Path to GraalVM bin folder"), graalPathText, 1, true)
             addComponent(startWithDebuggerCheckbox, 1)
             addComponentFillVertically(JPanel(), 0)
         }.panel
+
+        useInternalProcessCheckbox.addChangeListener {
+            startWithDebuggerCheckbox.isEnabled = useInternalProcessCheckbox.isSelected
+            graalPathText.isEnabled = useInternalProcessCheckbox.isSelected
+        }
     }
 
     private fun buildGraalPathField(): TextFieldWithBrowseButton {

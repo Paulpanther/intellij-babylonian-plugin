@@ -34,7 +34,6 @@ class LSPWrapper: Disposable {
         if (launcher != null) throw AlreadyConnectedException()
 
         startServerProcess()
-        Thread.sleep(2000)
 
         val processBuilder = ProcessBuilder()
         processBuilder.command("nc", "localhost", port)
@@ -56,6 +55,7 @@ class LSPWrapper: Disposable {
     @Throws(ServerStartFailedException::class)
     private fun startServerProcess() {
         val settings = babylonianSettings
+        if (!settings.useInternalProcess) return
 
         val debugArgs = "--vm.Xrunjdwp:transport=dt_socket,server=y,address=8000,suspend=n"
         val args = "./polyglot --lsp=$port --jvm --experimental-options --shell".split(" ").toMutableList()
@@ -66,6 +66,7 @@ class LSPWrapper: Disposable {
         processBuilder.command(args)
         try {
             process = processBuilder.start()
+            Thread.sleep(2000)
         } catch (e: Exception) {
             throw ServerStartFailedException()
         }
