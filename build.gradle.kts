@@ -31,7 +31,7 @@ dependencies {
     detektPlugins("io.gitlab.arturbosch.detekt:detekt-formatting:1.17.1")
     implementation(kotlin("stdlib-jdk8"))
     implementation("org.eclipse.lsp4j", "org.eclipse.lsp4j", "0.12.0")
-    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.11.1")
+    implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-xml:2.13.1")
 }
 
 // Configure gradle-intellij-plugin plugin.
